@@ -1,4 +1,9 @@
 ---
+slug: greenvideo-extract-jaylon
+displayName: GreenVideo Extract
+version: 1.0.0
+summary: 复刻 greenvideo.cc 前端加密流程，解析 1000+ 视频平台链接（抖音/快手/B站/YouTube/TikTok/小红书等），获取标题、封面、各清晰度下载直链。
+license: MIT
 name: greenvideo-extract
 description: 通过复刻 greenvideo.cc 前端加密流程（AES-128-CBC + RSA-1024）调用 /api/video/cnSimpleExtract 接口，解析 1000+ 视频平台的视频链接（抖音/快手/B站/YouTube/TikTok/小红书/微博等），获取标题、封面、各清晰度下载直链。当用户提供视频分享文本或视频 URL 想提取下载链接、提到 greenvideo.cc/cnSimpleExtract、或想了解 greenvideo 前端 AES+RSA 加密流程时触发。也适用于加密失败需要用 --replay 模式重放浏览器抓包 body 的排查场景。
 agent_created: true
