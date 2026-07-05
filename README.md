@@ -9,7 +9,7 @@
 - 🚀 **零 npm install**：仅依赖 Node.js 内置模块（`crypto` / `fetch` / `child_process`）
 - 🌐 **1000+ 平台**：抖音、快手、B站、YouTube、TikTok、小红书、微博、公众号、CCTV、知乎、AcFun、虎牙、斗鱼、Vimeo、Weverse 等
 - 📦 **两种使用模式**：
-  - `greenvideo_extract.cjs` — 仅解析，把原始链接完整呈现
+  - `video_extract.cjs` — 仅解析，把原始链接完整呈现
   - `download_videos.cjs` — 解析 + 下载到本地，自动建独立目录、公众号生成 MD、图片本地化
 - 📝 **公众号支持**：自动保存文章 markdown 全文，内嵌图片全部本地化
 - 🔁 **B 站特殊处理**：自动加 `Referer` 头；同 BV 号多次解析可能返回不同码率流，可对比 `bw` 字段挑高清
@@ -20,7 +20,7 @@
 ExtractVideoSkill/
 ├── SKILL.md                          # WorkBuddy SKILL 主入口（触发词 / Workflow / Download Guide）
 ├── scripts/
-│   ├── greenvideo_extract.cjs        # 核心：复刻加密 + 调接口
+│   ├── video_extract.cjs        # 核心：复刻加密 + 调接口
 │   └── download_videos.cjs           # 下载模式：批量下载到独立目录
 ├── references/
 │   └── encryption_flow.md            # 加密流程逆向分析
@@ -45,7 +45,7 @@ ln -s "$(pwd)" ~/.workbuddy/skills/all-platform-video-extract
 **仅解析**（拿原始链接）：
 
 ```bash
-node scripts/greenvideo_extract.cjs "8.94 复制打开抖音，看看【xxx的作品】..."
+node scripts/video_extract.cjs "8.94 复制打开抖音，看看【xxx的作品】..."
 ```
 
 **下载到本地**（行为模式 B）：

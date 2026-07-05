@@ -1,214 +1,107 @@
-# cnSimpleExtract 加密流程分析
+# 加密流程参考（AI 阅读）
 
-> 目标：分析前端代码怎么把原始文本输入变成 `https://greenvideo.cc/api/video/cnSimpleExtract` POST 接口的加密 body，并完整复现。
-> 不涉及解密服务端返回内容，只复现"如何加密"。
-
----
-
-## 1. 关键代码位置
-
-| 角色 | 文件 | 关键内容 |
-|------|------|---------|
-| 入口调用 | `C8YVeVYM.js` | 主页 `index.vue`，`w()` 里调 `l.extractVideoUrl({url: inputUrl, list, pageNo, pageSize})` |
-| 业务 action | `CuWTknZj.js` | `extractVideoUrl(i)` 调 `C("/video/cnSimpleExtract", {method:"post", body:i})`；code===530 时 `await R().useReqPublicKey()` 后重试 |
-| 请求封装 + 加密前置 | `D7yAekyA.js` | `Ko = async (e,o)=>{...}` 里的白名单分支（`/video/cnSimpleExtract` / `/video/extract/v2` / `/message/report`）执行加密 |
-| 加密库 | `Cnx7Ipy2-1.js` | 末尾导出 `aesEncryptString / decryptByPublicKey / encryptLongByPublicKey`（基于 CryptoJS + JSEncrypt） |
+> 何时读这份文档：用户在排查 `code=530` 错误、需要复现加密参数、或 `--replay` 模式失败时。
+> 不必读的场景：脚本正常返回 `code=200` 时 —— 直接用 `video_extract.cjs` 即可。
+> 维护者读这份文档：扩展支持新平台、修正接口常量。
 
 ---
 
-## 2. 整体加密流程
+## 1. AI 在不同情境下要做什么
 
-```
-                       ┌────────────────────────────────────────┐
-   原始 inputUrl       │  step 0 构造 body                      │
-   (例抖音分享文本) ──>│  body = { url, list, pageNo, pageSize }│
-                       └───────────────┬────────────────────────┘
-                                       │  POST /video/cnSimpleExtract (body 明文)
-                                       ▼
-                       ┌────────────────────────────────────────┐
-                       │  server 第一次：返回 { code: 530 }     │
-                       │  → 触发 useReqPublicKey()              │
-                       └───────────────┬────────────────────────┘
-                                       ▼
-                       ┌────────────────────────────────────────┐
-                       │  GET /auth/keys                        │
-                       │  server 返回 { code:200, data:{k1,k2}} │
-                       │    k1: PEM 公钥                        │
-                       │    k2: 用私钥 PKCS#1 v1.5 加密的 AES key│
-                       └───────────────┬────────────────────────┘
-                                       │  store.publicKey = k1, store.k2 = k2
-                                       ▼
-                       ┌────────────────────────────────────────┐
-                       │  step 3 解 AES key                     │
-                       │  aesKey = decryptByPublicKey(k2)       │
-                       │  (= 用公钥 doPublic，把服务端私钥签的   │
-                       │     一次性 AES key 还原)                │
-                       └───────────────┬────────────────────────┘
-                                       ▼
-                       ┌────────────────────────────────────────┐
-                       │  step 4 AES 加密 body                  │
-                       │  tmp = AES-CBC-PKCS7(                  │
-                       │           JSON.stringify(body),        │
-                       │           key = aesKey,               │
-                       │           iv  = atob(                  │
-                       │             "a2Vkb3VAODk4OSE2MzIzMw==")│
-                       │        )                                │
-                       │  → base64 字符串                       │
-                       └───────────────┬────────────────────────┘
-                                       ▼
-                       ┌────────────────────────────────────────┐
-                       │  step 5 RSA 加密长文本                 │
-                       │  final = encryptLongByPublicKey(tmp)   │
-                       │  (= JSEncrypt.encryptLong，PKCS#1 v1.5 │
-                       │     分段加密)                          │
-                       └───────────────┬────────────────────────┘
-                                       ▼
-                       ┌────────────────────────────────────────┐
-                       │  POST /video/cnSimpleExtract           │
-                       │  body = final   (header.KdSystem=      │
-                       │             "GreenVideo")              │
-                       └────────────────────────────────────────┘
-```
+### 1.1 用户报"解析失败 / code=530 / 报错"
+
+按顺序：
+
+1. 重跑脚本（公钥 5 分钟内会过期，重新拿一次就好）
+2. 仍失败 → 让用户用浏览器 DevTools 抓 `cnSimpleExtract` 那个 POST 请求的 **body 字符串**，跑 `--replay` 验证接口本身
+3. `--replay` 成功 → 说明服务正常，问题在客户端加密脚本，参考第 3 节"客户端加密"对比 diff
+4. `--replay` 失败 → 报给用户："服务端可能更新了，参考第 2 节'服务端协议'检查接口变更"
+
+### 1.2 用户想理解"为什么能解析"
+
+回答要点：
+- 服务端返回加密的 AES key + 公钥
+- 客户端用公钥还原 AES key，再用 AES + RSA 长文本加密 POST body
+- 服务端校验通过 → 返回明文 JSON（含各平台下载链接）
+
+### 1.3 用户想加新平台
+
+- 平台支持由服务端决定，客户端脚本不感知
+- 新平台解析失败 → 提交服务端问题或等待服务端更新平台列表
+- 客户端无需改动
+
+### 1.4 用户问"为什么 is not found / 404"
+
+- 大概率是分享文本里 URL 缺了 token 段（抖音短链经常这样）
+- 提示用户提供**完整分享文本**（含 `数字 复制打开 xxx` 那段）
 
 ---
 
-## 3. 关键常量 / 代码片段
+## 2. 服务端协议（必传 / 可变 / 固定）
 
-### 3.1 白名单 + 加密逻辑（来自 `D7yAekyA.js` 第 101530 行附近）
-
-```js
-if (e.indexOf("/video/cnSimpleExtract")!==-1
- || e.indexOf("/video/extract/v2")!==-1
- || e.indexOf("/message/report")!==-1) {
-  let { encryptLongByPublicKey, decryptByPublicKey, aesEncryptString } =
-      await import("./Cnx7Ipy2.js");
-  const h = decryptByPublicKey(r.k2);             // 1) 还原 AES 密钥
-  let m = o.body;
-  m = aesEncryptString(JSON.stringify(m), h, "a2Vkb3VAODk4OSE2MzIzMw=="); // 2) AES 加密
-  m = encryptLongByPublicKey(m);                   // 3) RSA 长文本加密
-  o.body = m;
-}
-```
-
-> 整个加密前置逻辑就在 `Ko()` 的 onRequest 阶段里。`r` 是 pinia store（`un`），`r.k2` 来自 `useReqPublicKey()`。
-
-### 3.2 `useReqPublicKey`（来自 `D7yAekyA.js` 第 1475 行附近）
-
-```js
-async useReqPublicKey() {
-  const e = await Ko("/auth/keys", { method: "get" });
-  if (e.code !== 200) return Promise.resolve(e.message);
-  this.publicKey = e.data.k1;
-  this.k2        = e.data.k2;
-}
-```
-
-### 3.3 三个加密函数（来自 `Cnx7Ipy2-1.js` 第 183565 行附近）
-
-```js
-// mi: AES-CBC + PKCS7，key/iv 都用 Utf8.parse
-const aesEncryptString = (a, e, t) => {
-  const r = CryptoJS.enc.Utf8.parse(e);
-  const s = CryptoJS.enc.Utf8.parse(atob(t));
-  return CryptoJS.AES.encrypt(a, r, {
-    iv: s, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
-  }).toString();
-};
-
-// Fi: 用前端缓存的 publicKey 做 RSA 长文本加密
-const encryptLongByPublicKey = (a) => {
-  const e = hr();                                  // 取 store 里的 publicKey
-  const t = new JSEncrypt();
-  t.setPublicKey(e.publicKey);
-  return t.encryptLong(a) + "";
-};
-
-// wi: 用 publicKey（公钥）解出 k2 的明文
-//   —— 实际是 raw RSA doPublic：服务端先用私钥 PKCS#1 v1.5 type 1 加密，
-//   客户端用公钥 doPublic 解出 PKCS#1 v1.5 type 1 block，再剥 padding 取明文。
-const decryptByPublicKey = (a) => {
-  const e = hr();
-  const t = new JSEncrypt();
-  t.setPublicKey(e.publicKey);
-  const r = t.getKey();
-  r.decrypt = function(s) {                       // 覆盖默认 decrypt，做 raw 解密
-    const u = parse(s, 16);
-    const l = this.doPublic(u);
-    return l == null ? null : stripPkcs1(l, this.n.bitLength() + 7 >> 3);
-  };
-  return t.decrypt(a) + "";
-};
-```
-
-### 3.4 入口 `extractVideoUrl`（来自 `CuWTknZj.js` 第 5216 行附近）
-
-```js
-async extractVideoUrl(i) {
-  let o = await C("/video/cnSimpleExtract", { method: "post", body: i });
-  if (o.code !== 200) {
-    if (o.code === 530) {
-      await R().useReqPublicKey();
-      o = await C("/video/cnSimpleExtract", { method: "post", body: i });
-      if (o.code !== 200) return Promise.reject(new Error(q(o.code, o.message)));
-    } else {
-      return Promise.reject(new Error(q(o.code, o.message)));
-    }
-  }
-  this.videoExtractInfo = o.data;
-}
-```
-
-注意：第二次重试时 `body: i` 还是原始明文对象，因为整个加密是在 `C / Ko` 的 onRequest 前置里完成的（`C` 是 `Ko` 的封装），跟调用方传的 body 是不是明文无关。
-
-### 3.5 调用方传的 body 形状（来自 `C8YVeVYM.js` 的 `w()`）
-
-```js
-const n = { url: a.value, list: undefined, pageNo: undefined, pageSize: undefined };
-await l.extractVideoUrl(n);
-```
+| 项目 | 类型 | 用途 | 维护注意 |
+|------|------|------|---------|
+| 域名 | 必传 | 解析服务 | 仅维护在 `video_extract.cjs` 顶部的常量，改名要找全部调用方 |
+| 接口 | 必传 | `POST /api/video/cnSimpleExtract` | 路径改了脚本就废，注意服务端路由 |
+| Header | 必传 | `KdSystem=GreenVideo` | 这串改了脚本就废 |
+| IV | 固定 | `a2Vkb3VAODk4OSE2MzIzMw==`（base64），明文 `kedou@8989!63233` | 服务端硬编码，不应变更；变更就废 |
+| 公钥 | 动态 | `GET /api/auth/keys` 返回的 `k1` | 每次 5 分钟过期 |
+| 加密 AES key | 动态 | `/auth/keys` 返回的 `k2`（用私钥加密） | 客户端用公钥还原 |
 
 ---
 
-## 4. 重要细节 / 踩坑点
+## 3. 客户端加密（脚本对应位置）
 
-1. **首次请求一定返回 530**——这是协议设计，迫使客户端先拉公钥。
-2. **`k2` 不是"被公钥加密的"，而是"被私钥加密的"**。所以 `decryptByPublicKey` 实际是调用 RSA 公钥指数 e 做 raw 解密（doPublic）。这种用法只有"服务端需要让客户端能解出明文、但又不想让客户端伪造"时才这么设计。
-3. **IV 是常量** `a2Vkb3VAODk4OSE2MzIzMw==`，`atob` 后是 `kedou@8989!63233`（**16 字节，0 字符**），符合 AES-CBC IV 长度要求。key 才是随机的。
-4. **RSA keySize**：从抓包 body 长度 ~516 base64 反推 1024-bit RSA（128 字节 = 172 base64），3 段说明 key 1024 bit。
-5. **`KdSystem: GreenVideo`** header 是 `onRequest` 阶段必带的，业务路由校验会用到。
-6. **白名单**：只有 `/video/cnSimpleExtract`、`/video/extract/v2`、`/message/report` 走加密。其它接口不加密。
+`video_extract.cjs` 内部按以下顺序执行，对应原前端 4 个 JS 文件：
+
+| 步骤 | 对应原前端 | 脚本函数 | 行为 |
+|------|-----------|---------|------|
+| 1. Cookie | `C8YVeVYM.js` 首页 | `fetchBaseUrl()` | GET 首页拿 Set-Cookie |
+| 2. 公钥+AES | `CuWTknZj.js` useReqPublicKey | `fetchKeys()` | GET /api/auth/keys，存 k1、k2 |
+| 3. 还原 AES | `D7yAekyA.js` 白名单 | `decryptByPublicKey(k2)` | RSA doPublic（PKCS#1 v1.5） |
+| 4. AES 加密 body | `Cnx7Ipy2-1.js` aesEncryptString | `aesEncryptString(plain, aesKey)` | AES-128-CBC + PKCS7 |
+| 5. RSA 分段加密 | `Cnx7Ipy2-1.js` encryptLongByPublicKey | `encryptLongByPublicKey(step1, k1)` | 117 字符切片（1024 bit - 11 padding），每段 RSA encrypt，base64 拼接 |
+| 6. POST | `C8YVeVYM.js` w() | `postExtract(body)` | 发请求，解析返回 |
+
+**关键细节**（出问题先看这些）：
+
+- **RSA 分段长度 117 = 1024/8 - 11**：如果服务端换了 2048 位 RSA，分段要改成 245
+- **RSA padding 是 PKCS#1 v1.5**（不是 OAEP）：和 JSEncrypt 默认行为一致
+- **AES IV 是常量**：base64 解码后正好 16 字节（`kedou@8989!63233` 长度 16）
+- **白名单接口**：只 `/video/cnSimpleExtract`、`/video/extract/v2`、`/message/report` 走加密，其他接口不加密 —— 抓包时区分清楚
 
 ---
 
-## 5. 复现脚本
+## 4. 抓包排查清单
 
-文件 `cnSimpleExtract_加密复现.cjs` 已经写好并跑通：
+当 `--replay` 也失败时，AI 应引导用户提供以下抓包信息（**只让用户提供 body 字符串本身，不要截图整个请求**）：
 
-```
-$ node cnSimpleExtract_加密复现.cjs
-[+] k1 公钥前 60 字符 = -----BEGIN PUBLIC KEY----- ...
-[+] k2 密文 (base64) = ...
-[+] AES key 解出来 = s3cr3t-aes-key-A
-[+] AES 加密后 (中间值) = rUAkycqqt1zGTvCeKM+ol0iU9+EH3WqENj3XwJvdaGhgC2YdGoY7JN7XW3co ... len= 256
-[+] 最终 body (RSA) 前 60 字符 = ... len= 516
-```
+1. POST `/api/video/cnSimpleExtract` 请求的 **body 字符串**（DevTools → Network → Payload 标签）
+2. 同请求的 `KdSystem` header 值
+3. 响应状态码和响应 body 前 200 字符
 
-脚本里：
+**不要让用户提供**：cookie、token、登录信息等敏感数据。
 
-- 用 `node:crypto` 原生实现了 RSA 1024 + AES-128-CBC + PKCS#1 v1.5（不依赖 crypto-js / node-rsa / jsencrypt）。
-- `encryptPrivateToPublic` 模拟服务端"用私钥加密 AES 密钥"（即 k2 的来源）。
-- `clientDecryptByPublicKey` 还原客户端 `wi` 流程。
-- `aesEncryptString` 等价于 CryptoJS.AES.encrypt（key/iv 走 Utf8.parse，mode CBC, padding PKCS7）。
-- `encryptLongByPublicKey` 按 RSA keySize/11 分段加密，再拼成一段 base64，跟 JSEncrypt.encryptLong 行为一致。
+---
 
-> 真实环境下你只需要把 `serverIssueKeys` 改成调 `GET /auth/keys` 拿 `k1/k2`，其余加密流程不变；调用样例（对应你给的抖音文本）：
+## 5. 故障模式速查
 
-```js
-const sample = '3.58 复制打开抖音，看看【_馬冬的作品】出门在外身份是自己给的！！ # 文静小女生 # 馬... https://v.douyin.com/q3Xf96DFFCk/ Iic:/ m@Q.xF 03/03';
-const out = reproduce(sample);   // → 最终 body
-// fetch("https://greenvideo.cc/api/video/cnSimpleExtract", {
-//   method: "POST",
-//   headers: { "content-type": "application/json", "kdsystem": "GreenVideo", ... },
-//   body: out,
-// })
-```
+| 现象 | 可能原因 | AI 应做的动作 |
+|------|---------|--------------|
+| `code=530` | 公钥过期 | 重跑脚本 |
+| `code=530` 重跑仍失败 | 加密 body 与抓包不一致 | 引导用 `--replay` 比对 |
+| `code=200` 但 videoItemVoList 为空 | 输入文本不完整（抖音最常见） | 提示用户提供完整分享文本 |
+| 超时 60s | 服务端慢 | 提示重试 1~2 次 |
+| `canDirectDownload=false` 担心不能下载 | 该字段不可靠 | 实测：小红书/抖音/公众号可直接 curl；B 站需 Referer |
+| B 站 403 | 缺 Referer | curl 加 `-H "Referer: https://www.bilibili.com"` |
+| 同一 B 站链接解析出多条结果 | B 站同视频多码率流 | 告知用户对比 `bw` 字段选高清 |
+| 公众号 content.md 没生成 | 接口没返回 markdown 项 | 检查接口返回的 items 是否有 `markdown文本` 字段 |
+| 公众号图片没本地化 | mmbiz 链接没出现在 markdown 中 | 检查 markdown 源文，确认图片用 `![...](https://mmbiz.qpic.cn/...)` 形式 |
+
+---
+
+## 6. 不在这份文档范围
+
+- **脚本整体使用**：见 `SKILL.md` 的 Quick Start
+- **下载目录规范**：见 `SKILL.md` 的 Step 6
+- **接口返回 JSON 结构**：脚本直接打印，无需文档

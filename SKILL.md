@@ -20,7 +20,7 @@ links:
 
 通过加密接口（AES-128-CBC + RSA-1024 PKCS#1 v1.5 长文本分段加密）解析视频链接，获取标题、封面、各清晰度下载直链。支持 1000+ 视频平台（抖音、快手、B 站、YouTube、TikTok、小红书、微博等）。
 
-核心脚本 `scripts/greenvideo_extract.cjs` 已实现完整的加密流程与接口调用，仅依赖 Node.js 内置模块（`crypto`、`fetch`），无需安装任何第三方包。
+core 脚本 `scripts/video_extract.cjs` 已实现完整的加密流程与接口调用，仅依赖 Node.js 内置模块（`crypto`、`fetch`），无需安装任何第三方包。
 
 ## Supported Platforms
 
@@ -101,19 +101,19 @@ links:
 把视频分享文本或 URL 作为参数传入：
 
 ```bash
-node ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.cjs "<视频分享文本或URL>"
+node ~/.workbuddy/skills/all-platform-video-extract/scripts/video_extract.cjs "<视频分享文本或URL>"
 ```
 
 示例（抖音分享文本）：
 
 ```bash
-node ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.cjs "3.58 复制打开抖音，看看【_馬冬的作品】出门在外身份是自己给的！！ # 文静小女生 # 馬... https://v.douyin.com/q3Xf96DFFCk/ Iic:/ m@Q.xF 03/03"
+node ~/.workbuddy/skills/all-platform-video-extract/scripts/video_extract.cjs "3.58 复制打开抖音，看看【_馬冬的作品】出门在外身份是自己给的！！ # 文静小女生 # 馬... https://v.douyin.com/q3Xf96DFFCk/ Iic:/ m@Q.xF 03/03"
 ```
 
 示例（B 站 URL）：
 
 ```bash
-node ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.cjs "https://www.bilibili.com/video/BV1ypdgBCE9B/"
+node ~/.workbuddy/skills/all-platform-video-extract/scripts/video_extract.cjs "https://www.bilibili.com/video/BV1ypdgBCE9B/"
 ```
 
 成功时输出形如：
@@ -144,7 +144,7 @@ vid: xxx  host: xxx  title: 视频标题
 如果加密模式返回 `code=530`（加密验证失败），可以让用户从浏览器 DevTools 抓取真实请求 body，然后用重放模式验证接口本身是否正常：
 
 ```bash
-node ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.cjs --replay "<抓包拿到的加密 body 字符串>"
+node ~/.workbuddy/skills/all-platform-video-extract/scripts/video_extract.cjs --replay "<抓包拿到的加密 body 字符串>"
 ```
 
 ### 3. 交互模式（查看帮助）
@@ -152,7 +152,7 @@ node ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.c
 不带参数运行会打印用法说明：
 
 ```bash
-node ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.cjs
+node ~/.workbuddy/skills/all-platform-video-extract/scripts/video_extract.cjs
 ```
 
 ## Workflow
@@ -233,11 +233,11 @@ node ~/.workbuddy/skills/all-platform-video-extract/scripts/download_videos.cjs 
 
 ### Step 3: 执行脚本
 
-使用 Node.js 运行 `scripts/greenvideo_extract.cjs`。推荐使用受管理的 Node 运行时：
+使用 Node.js 运行 `scripts/video_extract.cjs`。推荐使用受管理的 Node 运行时：
 
 ```bash
 /Users/jaylon/.workbuddy/binaries/node/versions/22.22.2/bin/node \
-  ~/.workbuddy/skills/all-platform-video-extract/scripts/greenvideo_extract.cjs \
+  ~/.workbuddy/skills/all-platform-video-extract/scripts/video_extract.cjs \
   "<分享文本或URL>"
 ```
 
@@ -335,7 +335,7 @@ curl -o video.mp4 \
 
 ## Resources
 
-### scripts/greenvideo_extract.cjs
+### scripts/video_extract.cjs
 
 核心执行脚本，已跑通。功能：
 
@@ -352,7 +352,7 @@ curl -o video.mp4 \
 
 ### scripts/download_videos.cjs
 
-**下载模式专用脚本**（行为模式 B）。封装 `greenvideo_extract.cjs` 的解析能力，下载所有资源到本地：
+**下载模式专用脚本**（行为模式 B）。封装 `video_extract.cjs` 的解析能力，下载所有资源到本地：
 
 - 调用 extract 脚本解析接口
 - 按 `<平台>-<vid>-<标题截断60字>/` 规范建独立目录

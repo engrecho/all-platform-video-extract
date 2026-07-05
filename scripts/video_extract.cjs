@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * greenvideo.cc /api/video/cnSimpleExtract 调用脚本
+ * 视频解析脚本（AES-128-CBC + RSA-1024 加密接口）
  *
  * 功能：
- *   1) 自动访问 greenvideo.cc 获取 cookie（网站免登录）
+ *   1) 自动访问解析服务获取 cookie（网站免登录）
  *   2) 复刻前端加密流程（AES-128-CBC + RSA-1024）
  *   3) 调用 /api/video/cnSimpleExtract 解析视频
  *
  * 用法：
- *   加密模式（推荐）：node greenvideo_extract.cjs "<视频分享文本或URL>"
- *   重放模式：          node greenvideo_extract.cjs --replay "<抓包 body>"
- *   交互模式：          node greenvideo_extract.cjs
+ *   加密模式（推荐）：node video_extract.cjs "<视频分享文本或URL>"
+ *   重放模式：          node video_extract.cjs --replay "<抓包 body>"
+ *   交互模式：          node video_extract.cjs
  *
  * 加密流程（复刻 Cnx7Ipy2-1.js / D7yAekyA.js）：
  *   1) GET /api/auth/keys        -> { k1: 公钥(base64), k2: RSA加密的AES密钥(base64) }
@@ -217,13 +217,13 @@ async function main() {
   if (args.length === 0) {
     console.log(`
 用法：
-  加密模式（推荐）：node greenvideo_extract.cjs "<视频分享文本或URL>"
-  重放模式：          node greenvideo_extract.cjs --replay "<抓包 body>"
-  交互模式：          node greenvideo_extract.cjs
+  加密模式（推荐）：node video_extract.cjs "<视频分享文本或URL>"
+  重放模式：          node video_extract.cjs --replay "<抓包 body>"
+  交互模式：          node video_extract.cjs
 
 示例：
-  node greenvideo_extract.cjs "8.94 复制打开抖音，看看【高逊丨Ai行业全案的作品】..."
-  node greenvideo_extract.cjs "https://www.bilibili.com/video/BV1ypdgBCE9B/"
+  node video_extract.cjs "8.94 复制打开抖音，看看【高逊丨Ai行业全案的作品】..."
+  node video_extract.cjs "https://www.bilibili.com/video/BV1ypdgBCE9B/"
 
 输出：
   成功（code=200）时，会打印 videoItemVoList 中各清晰度的下载链接

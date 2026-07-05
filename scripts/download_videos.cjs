@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * greenvideo-extract 下载脚本
+ * all-platform-video-extract 下载脚本
  *
  * 解析一个或多个视频链接，把所有可下载资源按规范保存到本地。
  *
@@ -26,7 +26,7 @@
  *   - 去除首尾空白
  *   - 整目录名控制在 ~120 字符以内
  *
- * 行为：调用 greenvideo_extract.cjs 解析后，逐个下载 + 公众号生成 MD。
+ * 行为：调用 video_extract.cjs 解析后，逐个下载 + 公众号生成 MD。
  */
 
 const { execFileSync } = require('child_process');
@@ -37,7 +37,7 @@ const https = require('https');
 const { URL } = require('url');
 
 const SKILL_DIR = path.resolve(__dirname);
-const EXTRACT_SCRIPT = path.join(SKILL_DIR, 'greenvideo_extract.cjs');
+const EXTRACT_SCRIPT = path.join(SKILL_DIR, 'video_extract.cjs');
 const OUTPUT_ROOT = process.env.GV_OUTPUT || path.join(process.cwd(), 'gv_downloads');
 const NODE_BIN = process.env.GV_NODE || '/Users/jaylon/.workbuddy/binaries/node/versions/22.22.2/bin/node';
 
