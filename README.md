@@ -2,7 +2,7 @@
 
 > 一个 WorkBuddy SKILL，把任意视频分享文本或 URL（抖音/快手/B站/小红书/公众号等 1000+ 平台）解析成可下载的原始资源。
 
-通过复刻 [greenvideo.cc](https://greenvideo.cc) 前端加密流程（AES-128-CBC + RSA-1024 PKCS#1 v1.5），调用其 `/api/video/cnSimpleExtract` 接口，零依赖拿到视频直链、封面、音频、所有图片，以及公众号文章的完整 markdown 文案。
+通过 AES-128-CBC + RSA-1024 PKCS#1 v1.5 加密接口，零依赖拿到视频直链、封面、音频、所有图片，以及公众号文章的完整 markdown 文案。
 
 ## 特性
 
@@ -23,7 +23,7 @@ ExtractVideoSkill/
 │   ├── greenvideo_extract.cjs        # 核心：复刻加密 + 调接口
 │   └── download_videos.cjs           # 下载模式：批量下载到独立目录
 ├── references/
-│   └── encryption_flow.md            # greenvideo 前端加密流程逆向分析
+│   └── encryption_flow.md            # 加密流程逆向分析
 └── .gitignore
 ```
 
@@ -35,7 +35,7 @@ ExtractVideoSkill/
 
 ```bash
 # 软链接到用户级 skills 目录（macOS / Linux）
-ln -s "$(pwd)" ~/.workbuddy/skills/greenvideo-extract
+ln -s "$(pwd)" ~/.workbuddy/skills/all-platform-video-extract
 ```
 
 装好后，在 WorkBuddy 中发任何视频分享文本或链接都会自动触发。
@@ -92,6 +92,6 @@ GV_OUTPUT=~/Videos/归档 node scripts/download_videos.cjs "链接"
 
 ## License
 
-仅供个人学习研究使用。greenvideo.cc 是公开免登录网站，本工具仅调用其公开接口，不涉及绕过付费/鉴权。
+仅供个人学习研究使用。解析服务为公开免登录网站，本工具仅调用其公开接口，不涉及绕过付费/鉴权。
 
 下载的视频/图片请在 24 小时内删除，遵守原作者版权。
