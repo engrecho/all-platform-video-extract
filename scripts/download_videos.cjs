@@ -39,7 +39,7 @@ const { URL } = require('url');
 const SKILL_DIR = path.resolve(__dirname);
 const EXTRACT_SCRIPT = path.join(SKILL_DIR, 'video_extract.cjs');
 const OUTPUT_ROOT = process.env.GV_OUTPUT || path.join(process.cwd(), 'gv_downloads');
-const NODE_BIN = process.env.GV_NODE || '/Users/jaylon/.workbuddy/binaries/node/versions/22.22.2/bin/node';
+const NODE_BIN = process.env.GV_NODE || require('child_process').execSync('which node').toString().trim();
 
 const TITLE_MAX = 60;          // 标题部分最多 60 字符
 const DOWNLOAD_TIMEOUT = 60000; // 单文件下载 60s
@@ -384,7 +384,7 @@ async function main() {
 
 环境变量：
   GV_OUTPUT    输出根目录（默认 ./gv_downloads）
-  GV_NODE      Node 二进制路径（默认 /Users/jaylon/.workbuddy/binaries/node/versions/22.22.2/bin/node）
+  GV_NODE      Node 二进制路径（默认 which node 的结果）
 
 目录命名：<平台>-<vid>-<标题截断60字>/
 `);
