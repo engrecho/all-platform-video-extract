@@ -5,7 +5,7 @@
  * 工作流：
  *   dev/SKILL.md        → release/SKILL.md        （直接复制）
  *   dev/scripts/*.cjs   → release/scripts/*.cjs    （AES-256-CBC 加密）
- *   release/            → dist/ExtractVideoSkill.zip
+ *   release/            → release/ExtractVideoSkill.zip
  *
  * 用法：
  *   node dev/build.cjs              # 加密 + 同步 + 打包 zip
@@ -23,8 +23,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const DEV_DIR = path.join(__dirname, 'scripts');
 const RELEASE_DIR = path.join(PROJECT_ROOT, 'release');
 const OUT_DIR = path.join(RELEASE_DIR, 'scripts');
-const DIST_DIR = path.join(PROJECT_ROOT, 'dist');
-const ZIP_PATH = path.join(DIST_DIR, 'ExtractVideoSkill.zip');
+const ZIP_PATH = path.join(RELEASE_DIR, 'ExtractVideoSkill.zip');
 
 const NO_ZIP = process.argv.includes('--no-zip');
 
@@ -88,20 +87,18 @@ function copyRecursive(src, dest) {
 // ======== 3. 打包 zip ========
 
 function packageZip() {
-  ensureDir(DIST_DIR);
-
   // 清理旧 zip
   if (fs.existsSync(ZIP_PATH)) fs.unlinkSync(ZIP_PATH);
 
   // 用临时目录 staging，确保 zip 内顶层目录名为 ExtractVideoSkill
-  const tmpDir = path.join(DIST_DIR, '.tmp_package');
+  const tmpDir = path.join(PROJECT_ROOT, '.tmp_package');
   if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true });
   const stagedDir = path.join(tmpDir, 'ExtractVideoSkill');
   ensureDir(stagedDir);
 
-  // 复制 release 内容到临时目录
+  // 复制 release 内容到临时目录（排除旧 zip）
   for (const item of fs.readdirSync(RELEASE_DIR)) {
-    if (item.startsWith('.')) continue;
+    if (item.startsWith('.') || item.endsWith('.zip')) continue;
     copyRecursive(path.join(RELEASE_DIR, item), path.join(stagedDir, item));
   }
 

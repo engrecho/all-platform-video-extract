@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExtractVideoSkill — 1000+ 平台视频解析下载工具</title>
+<meta name="description" content="解析抖音、快手、B站、YouTube、TikTok、小红书等 1000+ 视频平台链接，获取下载直链。零依赖，仅需 Node.js。">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;--bg-2:#0f0f11;--surface:#141418;--surface-2:#1a1a20;--border:#222228;--border-light:#2a2a32;
+  --text:#f0f0f2;--text-2:#a0a0a8;--text-3:#606068;
+  --amber:#f59e0b;--amber-glow:rgba(245,158,11,.15);--green:#10b981;--green-glow:rgba(16,185,129,.12);
+  --red:#ef4444;--blue:#3b82f6;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Noto Sans CJK SC',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace}
+
+/* ===== Nav ===== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(10,10,10,.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.nav-logo{font-weight:700;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.nav-logo .dot{width:8px;height:8px;border-radius:2px;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--text-2);font-size:13px;font-weight:500;transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-links .btn{background:var(--surface);border:1px solid var(--border-light);padding:6px 16px;border-radius:7px;color:var(--text);font-weight:600;font-size:13px;transition:all .15s}
+.nav-links .btn:hover{border-color:#3a3a44;background:var(--surface-2)}
+
+/* ===== Hero ===== */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 24px 60px;position:relative}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-bg::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(ellipse,rgba(245,158,11,.08) 0%,transparent 60%);filter:blur(40px)}
+.hero-bg::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 60% 50% at 50% 40%,#000,transparent);-webkit-mask-image:radial-gradient(ellipse 60% 50% at 50% 40%,#000,transparent)}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);padding:5px 14px;border-radius:100px;font-size:12px;color:var(--text-2);margin-bottom:28px;position:relative;z-index:1;font-weight:500}
+.hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:clamp(40px,7vw,80px);font-weight:800;letter-spacing:-.035em;line-height:1.05;text-align:center;position:relative;z-index:1;margin-bottom:20px}
+.hero h1 .highlight{color:var(--amber)}
+.hero-sub{font-size:clamp(16px,2.2vw,20px);color:var(--text-2);text-align:center;max-width:520px;margin-bottom:40px;position:relative;z-index:1;line-height:1.5}
+.hero-cta{display:flex;gap:12px;position:relative;z-index:1;flex-wrap:wrap;justify-content:center}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--amber);color:#000;padding:12px 28px;border-radius:10px;font-weight:700;font-size:15px;transition:all .2s;box-shadow:0 4px 24px rgba(245,158,11,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 32px rgba(245,158,11,.35)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border-light);color:var(--text);padding:12px 28px;border-radius:10px;font-weight:600;font-size:15px;transition:all .15s}
+.btn-ghost:hover{border-color:#3a3a44;background:var(--surface-2)}
+
+/* ===== Terminal ===== */
+.terminal{width:100%;max-width:680px;margin:56px auto 0;position:relative;z-index:1;border-radius:12px;overflow:hidden;border:1px solid var(--border-light);box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.02)}
+.terminal-bar{height:36px;background:var(--surface-2);display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--border)}
+.terminal-bar .dots{display:flex;gap:6px}
+.terminal-bar .dots span{width:11px;height:11px;border-radius:50%}
+.terminal-bar .dots .r{background:#ff5f57}
+.terminal-bar .dots .y{background:#febc2e}
+.terminal-bar .dots .g{background:#28c840}
+.terminal-bar .title{font-size:12px;color:var(--text-3);margin-left:8px;font-family:'SF Mono',monospace}
+.terminal-body{background:#0c0c0e;padding:20px 24px;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.8;min-height:280px;color:var(--text-2)}
+.terminal-body .line{white-space:pre-wrap;word-break:break-all}
+.terminal-body .prompt{color:var(--amber)}
+.terminal-body .cmd{color:var(--text)}
+.terminal-body .out{color:var(--text-2)}
+.terminal-body .ok{color:var(--green)}
+.terminal-body .warn{color:var(--amber)}
+.terminal-body .info{color:var(--blue)}
+.terminal-body .link{color:#60a5fa;text-decoration:underline;text-underline-offset:2px}
+.terminal-body .cursor{display:inline-block;width:8px;height:15px;background:var(--amber);vertical-align:text-bottom;animation:cursor-blink 1s infinite}
+@keyframes cursor-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* ===== Section ===== */
+.section{padding:80px 24px;max-width:1080px;margin:0 auto}
+.section-label{font-size:12px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.section-title{font-size:clamp(28px,4.5vw,40px);font-weight:800;letter-spacing:-.025em;margin-bottom:12px}
+.section-desc{color:var(--text-2);font-size:16px;max-width:520px;margin-bottom:48px}
+
+/* ===== Features (inline, not cards) ===== */
+.features{display:flex;flex-direction:column;gap:0}
+.feature-row{display:flex;align-items:flex-start;gap:24px;padding:28px 0;border-top:1px solid var(--border)}
+.feature-row:last-child{border-bottom:1px solid var(--border)}
+.feature-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.feature-icon svg{width:20px;height:20px}
+.feature-icon.amber{background:var(--amber-glow);color:var(--amber)}
+.feature-icon.green{background:var(--green-glow);color:var(--green)}
+.feature-icon.blue{background:rgba(59,130,246,.12);color:var(--blue)}
+.feature-icon.red{background:rgba(239,68,68,.12);color:var(--red)}
+.feature-body h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.feature-body p{color:var(--text-2);font-size:14px;line-height:1.65}
+
+/* ===== Platforms grid ===== */
+.platforms{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;max-width:800px}
+.platform{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 12px;text-align:center;font-size:13px;font-weight:500;transition:all .15s;cursor:default}
+.platform:hover{border-color:var(--border-light);background:var(--surface-2);transform:translateY(-1px)}
+.platform.hot{border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)}
+.platform.hot:hover{border-color:rgba(245,158,11,.3)}
+
+/* ===== Download ===== */
+.download{background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px;text-align:center}
+.download h2{font-size:clamp(28px,4.5vw,40px);font-weight:800;letter-spacing:-.025em;margin-bottom:12px}
+.download p{color:var(--text-2);font-size:16px;margin-bottom:40px}
+.download-options{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:680px;margin:0 auto}
+.dl-card{background:var(--surface);border:1px solid var(--border-light);border-radius:12px;padding:24px;text-align:left;flex:1;min-width:260px;transition:all .2s}
+.dl-card:hover{border-color:#33333d;transform:translateY(-2px)}
+.dl-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dl-card-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.dl-card-icon.zip{background:var(--amber-glow);color:var(--amber)}
+.dl-card-icon.gh{background:rgba(255,255,255,.06);color:var(--text)}
+.dl-card h4{font-size:15px;font-weight:700}
+.dl-card p{font-size:13px;color:var(--text-2);margin-bottom:14px;line-height:1.5}
+.dl-card .dl-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--amber);transition:gap .15s}
+.dl-card .dl-btn:hover{gap:10px}
+.dl-card .dl-meta{font-size:11px;color:var(--text-3);margin-top:6px;font-family:'SF Mono',monospace}
+
+/* ===== Footer ===== */
+.footer{padding:40px 24px;text-align:center;border-top:1px solid var(--border)}
+.footer p{color:var(--text-3);font-size:12px}
+.footer a{color:var(--text-2);transition:color .15s}
+.footer a:hover{color:var(--amber)}
+
+/* ===== Reveal ===== */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .5s,transform .5s}
+.reveal.in{opacity:1;transform:translateY(0)}
+
+/* ===== Mobile ===== */
+@media(max-width:640px){
+  .nav{padding:0 16px}
+  .nav-links{gap:12px}
+  .nav-links a:not(.btn){display:none}
+  .feature-row{flex-direction:column;gap:12px}
+  .platforms{grid-template-columns:repeat(2,1fr)}
+  .terminal-body{font-size:11px;padding:16px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo"><span class="dot"></span>ExtractVideoSkill</div>
+  <div class="nav-links">
+    <a href="#features">特性</a>
+    <a href="#platforms">平台</a>
+    <a href="#quickstart">使用</a>
+    <a href="#download" class="btn">下载</a>
+  </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-tag">v2.0.0 · AES 加密发布版</div>
+  <h1>全网视频<br><span class="highlight">一键解析下载</span></h1>
+  <p class="hero-sub">抖音、快手、B站、YouTube、小红书等 1000+ 平台。零依赖，仅需 Node.js。</p>
+  <div class="hero-cta">
+    <a href="#download" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      立即下载
+    </a>
+    <a href="#quickstart" class="btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      快速开始
+    </a>
+  </div>
+
+  <!-- Terminal Demo -->
+  <div class="terminal" id="terminal">
+    <div class="terminal-bar">
+      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <span class="title">terminal — video_extract.cjs</span>
+    </div>
+    <div class="terminal-body" id="terminal-body">
+      <!-- Animated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ===== Features ===== -->
+<section id="features" class="section">
+  <div class="section-label reveal">特性</div>
+  <h2 class="section-title reveal">为什么选择它</h2>
+  <p class="section-desc reveal">从解析到下载，一个工具搞定全部流程。不装依赖，不解压运行库。</p>
+
+  <div class="features">
+    <div class="feature-row reveal">
+      <div class="feature-icon amber">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="feature-body">
+        <h3>零依赖运行</h3>
+        <p>仅依赖 Node.js 内置模块（crypto / fetch / child_process），无需 npm install，下载即用。</p>
+      </div>
+    </div>
+    <div class="feature-row reveal">
+      <div class="feature-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </div>
+      <div class="feature-body">
+        <h3>1000+ 平台</h3>
+        <p>抖音、快手、B站、YouTube、TikTok、小红书、微博、公众号等主流平台全覆盖，未列出的也能自动识别。</p>
+      </div>
+    </div>
+    <div class="feature-row reveal">
+      <div class="feature-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div class="feature-body">
+        <h3>一键下载</h3>
+        <p>解析后自动下载视频、音频、封面、所有图片到独立目录，公众号文章自动生成 markdown 离线副本。</p>
+      </div>
+    </div>
+    <div class="feature-row reveal">
+      <div class="feature-icon red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="feature-body">
+        <h3>加密发布</h3>
+        <p>发布版脚本经 AES-256-CBC 加密，源码不可直接查看。开发版与发布版分离，一键构建打包。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Platforms ===== -->
+<section id="platforms" class="section">
+  <div class="section-label reveal">平台</div>
+  <h2 class="section-title reveal">支持平台</h2>
+  <p class="section-desc reveal">1000+ 平台，以下为已确认支持的部分列表</p>
+  <div class="platforms reveal">
+    <div class="platform hot">抖音</div>
+    <div class="platform hot">快手</div>
+    <div class="platform hot">B站</div>
+    <div class="platform hot">YouTube</div>
+    <div class="platform hot">TikTok</div>
+    <div class="platform hot">小红书</div>
+    <div class="platform hot">公众号</div>
+    <div class="platform">微博</div>
+    <div class="platform">Twitter/X</div>
+    <div class="platform">Instagram</div>
+    <div class="platform">Facebook</div>
+    <div class="platform">Threads</div>
+    <div class="platform">Pinterest</div>
+    <div class="platform">西瓜视频</div>
+    <div class="platform">今日头条</div>
+    <div class="platform">好看视频</div>
+    <div class="platform">知乎</div>
+    <div class="platform">AcFun</div>
+    <div class="platform">搜狐视频</div>
+    <div class="platform">CCTV</div>
+    <div class="platform">虎牙</div>
+    <div class="platform">斗鱼</div>
+    <div class="platform">Vimeo</div>
+    <div class="platform">新片场</div>
+  </div>
+</section>
+
+<!-- ===== Quick Start ===== -->
+<section id="quickstart" class="section">
+  <div class="section-label reveal">使用</div>
+  <h2 class="section-title reveal">快速开始</h2>
+  <p class="section-desc reveal">两种模式：仅解析获取链接，或直接下载到本地</p>
+
+  <div class="terminal reveal" style="max-width:680px">
+    <div class="terminal-bar">
+      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <span class="title">terminal</span>
+    </div>
+    <div class="terminal-body" style="min-height:auto">
+      <div class="line"><span class="comment"># 仅解析 — 获取标题、封面、各清晰度下载直链</span></div>
+      <div class="line"><span class="prompt">$ </span><span class="cmd">node scripts/video_extract.cjs </span><span class="str">"8.94 复制打开抖音，看看【xxx的作品】..."</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="info">[1/5]</span> <span class="out">获取 cookie ...</span></div>
+      <div class="line"><span class="info">[2/5]</span> <span class="out">GET /auth/keys ...</span></div>
+      <div class="line"><span class="info">[3/5]</span> <span class="out">AES 加密 body ...</span></div>
+      <div class="line"><span class="info">[4/5]</span> <span class="out">RSA 分段加密 ...</span></div>
+      <div class="line"><span class="info">[5/5]</span> <span class="out">POST /api/video/cnSimpleExtract</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="ok">>>> 状态 = 200  耗时 = 5234 ms</span></div>
+      <div class="line"><span class="out">title: 出门在外身份是自己给的！！</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="out">共 3 个清晰度：</span></div>
+      <div class="line"><span class="warn">  [1080p]</span> <span class="out">mp4  size=12.3MB  direct=true</span></div>
+      <div class="line"><span class="out">    https://v26-dy.ixigua.com/...</span></div>
+      <div class="line"><span class="warn">  [720p]</span>  <span class="out">mp4  size=8.1MB   direct=true</span></div>
+      <div class="line"><span class="out">    https://v26-dy.ixigua.com/...</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="comment"># 下载到本地</span></div>
+      <div class="line"><span class="prompt">$ </span><span class="cmd">node scripts/download_videos.cjs </span><span class="str">"8.94 复制打开抖音..."</span></div>
+      <div class="line"><span class="ok">✓ video.mp4   12.3MB</span></div>
+      <div class="line"><span class="ok">✓ audio.mp3    3.1MB</span></div>
+      <div class="line"><span class="ok">✓ cover.jpg    280KB</span></div>
+      <div class="line"><span class="ok">✓ info.json    saved</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Download ===== -->
+<section id="download" class="download">
+  <h2 class="reveal">下载使用</h2>
+  <p class="reveal">选择适合你的方式</p>
+  <div class="download-options">
+    <div class="dl-card reveal">
+      <div class="dl-card-head">
+        <div class="dl-card-icon zip">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <h4>直接下载</h4>
+      </div>
+      <p>加密发布版 zip 包，解压即用，无需安装依赖。</p>
+      <a href="https://extractvideoskill.bajiaolu.cn/ExtractVideoSkill.zip" class="dl-btn">
+        下载 zip
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <div class="dl-meta">v2.0.0 · ~60KB · AES-256-CBC</div>
+    </div>
+    <div class="dl-card reveal">
+      <div class="dl-card-head">
+        <div class="dl-card-icon gh">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        </div>
+        <h4>GitHub 仓库</h4>
+      </div>
+      <p>查看源码、提交 Issue、参与贡献。含 dev/ 明文源码和 release/ 加密版。</p>
+      <a href="https://github.com/engrecho/ExtractVideoSkill" class="dl-btn">
+        前往 GitHub
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <div class="dl-meta">engrecho/ExtractVideoSkill</div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <p>ExtractVideoSkill v2.0.0 · 仅供个人学习研究使用 · <a href="https://github.com/engrecho/ExtractVideoSkill">GitHub</a> · <a href="https://extractvideoskill.bajiaolu.cn">extractvideoskill.bajiaolu.cn</a></p>
+</footer>
+
+<script>
+// ===== Terminal typing animation =====
+const terminalLines = [
+  {t:'<span class="comment"># 解析抖音视频</span>', d:300},
+  {t:'<span class="prompt">$ </span><span class="cmd">node scripts/video_extract.cjs </span><span class="str">"8.94 复制打开抖音..."</span>', d:600},
+  {t:'', d:200},
+  {t:'<span class="info">[1/5]</span> <span class="out">获取 cookie ...</span>', d:400},
+  {t:'<span class="info">[2/5]</span> <span class="out">GET /auth/keys ...</span>', d:350},
+  {t:'<span class="info">[3/5]</span> <span class="out">AES-128-CBC 加密 body ...</span>', d:350},
+  {t:'<span class="info">[4/5]</span> <span class="out">RSA-1024 分段加密 ...</span>', d:350},
+  {t:'<span class="info">[5/5]</span> <span class="out">POST /api/video/cnSimpleExtract</span>', d:500},
+  {t:'', d:200},
+  {t:'<span class="ok">>>> 状态 = 200  耗时 = 5234 ms</span>', d:300},
+  {t:'<span class="out">title: 出门在外身份是自己给的！！</span>', d:200},
+  {t:'<span class="out">vid: 7398xxx  平台: douyin</span>', d:200},
+  {t:'', d:200},
+  {t:'<span class="out">共 3 个清晰度：</span>', d:200},
+  {t:'<span class="warn">  [1080p]</span> <span class="out">mp4  12.3MB  direct=true</span>', d:200},
+  {t:'<span class="out">    https://v26-dy.ixigua.com/video/...</span>', d:150},
+  {t:'<span class="warn">  [720p]</span>  <span class="out">mp4  8.1MB   direct=true</span>', d:200},
+  {t:'<span class="out">    https://v26-dy.ixigua.com/video/...</span>', d:150},
+  {t:'<span class="warn">  [480p]</span>  <span class="out">mp4  4.7MB   direct=true</span>', d:200},
+  {t:'<span class="out">    https://v26-dy.ixigua.com/video/...</span>', d:300},
+  {t:'', d:300},
+  {t:'<span class="comment"># 下载到本地</span>', d:300},
+  {t:'<span class="prompt">$ </span><span class="cmd">node scripts/download_videos.cjs </span><span class="str">"8.94 复制打开抖音..."</span>', d:500},
+  {t:'<span class="ok">✓ video.mp4   12.3MB</span>', d:200},
+  {t:'<span class="ok">✓ audio.mp3    3.1MB</span>', d:200},
+  {t:'<span class="ok">✓ cover.jpg    280KB</span>', d:200},
+  {t:'<span class="ok">✓ info.json    saved</span>', d:200},
+  {t:'<span class="ok">✓ done → douyin-7398xxx-出门在外身份是自己给的/</span>', d:500},
+];
+
+const termBody = document.getElementById('terminal-body');
+let lineIdx = 0;
+
+function typeNext() {
+  if (lineIdx >= terminalLines.length) {
+    // Reset after 4 seconds
+    setTimeout(() => {
+      termBody.innerHTML = '';
+      lineIdx = 0;
+      typeNext();
+    }, 4000);
+    return;
+  }
+  const line = terminalLines[lineIdx];
+  const div = document.createElement('div');
+  div.className = 'line';
+  div.innerHTML = line.t;
+  termBody.appendChild(div);
+  lineIdx++;
+  setTimeout(typeNext, line.d);
+}
+
+// Start when terminal is visible
+const termObserver = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) {
+    typeNext();
+    termObserver.disconnect();
+  }
+}, { threshold: 0.3 });
+termObserver.observe(document.getElementById('terminal'));
+
+// ===== Scroll reveal =====
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('in');
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+</script>
+</body>
+</html>

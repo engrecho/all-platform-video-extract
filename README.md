@@ -27,9 +27,10 @@ ExtractVideoSkill/
 │   ├── scripts/
 │   │   ├── video_extract.cjs         # 加密 loader
 │   │   └── download_videos.cjs       # 加密 loader
-│   └── SKILL.md                      # 由 build.cjs 从 dev/ 同步
-├── dist/                             # 构建产物（gitignore）
-│   └── ExtractVideoSkill.zip         # 发布压缩包
+│   ├── SKILL.md                      # 由 build.cjs 从 dev/ 同步
+│   └── ExtractVideoSkill.zip         # 发布压缩包（由 build.cjs 生成）
+├── website/                          # 项目主页源码
+│   └── index.html                    # 部署在 extractvideoskill.bajiaolu.cn
 ├── README.md                         # 项目文档（本文件）
 └── .gitignore
 ```
@@ -106,7 +107,7 @@ node dev/build.cjs
 |------|------|------|
 | Step 1 | AES-256-CBC 加密 `dev/scripts/*.cjs` | `release/scripts/*.cjs` |
 | Step 2 | 复制 `dev/SKILL.md` | `release/SKILL.md` |
-| Step 3 | 将 `release/` 打包为 zip | `dist/ExtractVideoSkill.zip` |
+| Step 3 | 将 `release/` 打包为 zip | `release/ExtractVideoSkill.zip` |
 
 也可仅加密不打包：
 
@@ -114,7 +115,7 @@ node dev/build.cjs
 node dev/build.cjs --no-zip
 ```
 
-生成的 `dist/ExtractVideoSkill.zip` 内部结构：
+生成的 `release/ExtractVideoSkill.zip` 内部结构：
 
 ```
 ExtractVideoSkill/
@@ -125,6 +126,17 @@ ExtractVideoSkill/
 ```
 
 可直接上传到 SkillHub、GitHub Release 等平台。
+
+### 部署主页
+
+主页源码在 `website/index.html`，部署到服务器：
+
+```bash
+scp website/index.html root@<server>:/www/wwwroot/extractvideoskill.bajiaolu.cn/
+scp release/ExtractVideoSkill.zip root@<server>:/www/wwwroot/extractvideoskill.bajiaolu.cn/
+```
+
+在线访问：https://extractvideoskill.bajiaolu.cn
 
 ### 脚本加密方案
 
