@@ -5,7 +5,7 @@
  * 工作流：
  *   dev/SKILL.md        → release/SKILL.md        （直接复制）
  *   dev/scripts/*.cjs   → release/scripts/*.cjs    （AES-256-CBC 加密）
- *   release/            → release/ExtractVideoSkill.zip
+ *   release/            → release/skill.zip
  *
  * 用法：
  *   node dev/build.cjs              # 加密 + 同步 + 打包 zip
@@ -23,7 +23,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const DEV_DIR = path.join(__dirname, 'scripts');
 const RELEASE_DIR = path.join(PROJECT_ROOT, 'release');
 const OUT_DIR = path.join(RELEASE_DIR, 'scripts');
-const ZIP_PATH = path.join(RELEASE_DIR, 'ExtractVideoSkill.zip');
+const ZIP_PATH = path.join(RELEASE_DIR, 'skill.zip');
 
 const NO_ZIP = process.argv.includes('--no-zip');
 
@@ -90,10 +90,10 @@ function packageZip() {
   // 清理旧 zip
   if (fs.existsSync(ZIP_PATH)) fs.unlinkSync(ZIP_PATH);
 
-  // 用临时目录 staging，确保 zip 内顶层目录名为 ExtractVideoSkill
+  // 用临时目录 staging，确保 zip 内顶层目录名为 all-platform-video-extract
   const tmpDir = path.join(PROJECT_ROOT, '.tmp_package');
   if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true });
-  const stagedDir = path.join(tmpDir, 'ExtractVideoSkill');
+  const stagedDir = path.join(tmpDir, 'all-platform-video-extract');
   ensureDir(stagedDir);
 
   // 复制 release 内容到临时目录（排除旧 zip）
@@ -104,7 +104,7 @@ function packageZip() {
 
   // 打包
   execSync(
-    `cd "${tmpDir}" && zip -r "${ZIP_PATH}" ExtractVideoSkill -x "*.DS_Store" -x "__MACOSX*"`,
+    `cd "${tmpDir}" && zip -r "${ZIP_PATH}" all-platform-video-extract -x "*.DS_Store" -x "__MACOSX*"`,
     { stdio: 'pipe' }
   );
 
@@ -119,7 +119,7 @@ function packageZip() {
 
 function main() {
   console.log('╔══════════════════════════════════════════╗');
-  console.log('║   ExtractVideoSkill — 加密构建 + 打包     ║');
+  console.log('║   all-platform-video-extract — 加密构建 + 打包     ║');
   console.log('╚══════════════════════════════════════════╝\n');
 
   // --- Step 1: 加密脚本 ---
@@ -158,7 +158,7 @@ function main() {
   if (NO_ZIP) {
     console.log('\n【Step 3/3】跳过打包（--no-zip）');
   } else {
-    console.log('\n【Step 3/3】打包 ExtractVideoSkill.zip');
+    console.log('\n【Step 3/3】打包 skill.zip');
     packageZip();
   }
 

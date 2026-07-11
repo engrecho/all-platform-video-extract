@@ -3,24 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ExtractVideoSkill — 1000+ 平台视频解析下载工具</title>
-<meta name="description" content="解析抖音、快手、B站、YouTube、TikTok、小红书等 1000+ 视频平台链接，获取下载直链。零依赖，仅需 Node.js。">
+<title>AI全平台视频下载SKILL</title>
+<meta name="description" content="安装这个 Skill，你的 AI 助手就能解析抖音、快手、B站、YouTube、小红书等 1000+ 平台的视频链接，自动获取下载链接或下载到本地。">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#0a0a0a;--bg-2:#0f0f11;--surface:#141418;--surface-2:#1a1a20;--border:#222228;--border-light:#2a2a32;
   --text:#f0f0f2;--text-2:#a0a0a8;--text-3:#606068;
   --amber:#f59e0b;--amber-glow:rgba(245,158,11,.15);--green:#10b981;--green-glow:rgba(16,185,129,.12);
-  --red:#ef4444;--blue:#3b82f6;
+  --red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;--purple-glow:rgba(139,92,246,.12);
 }
 html{scroll-behavior:smooth}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Noto Sans CJK SC',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
-code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code',monospace}
 
 /* ===== Nav ===== */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:rgba(10,10,10,.72);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
 .nav-logo{font-weight:700;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.nav-logo img{width:28px;height:28px;border-radius:6px;flex-shrink:0}
 .nav-logo .dot{width:8px;height:8px;border-radius:2px;background:var(--amber);box-shadow:0 0 12px var(--amber)}
 .nav-links{display:flex;gap:28px;align-items:center}
 .nav-links a{color:var(--text-2);font-size:13px;font-weight:500;transition:color .15s}
@@ -36,43 +36,74 @@ code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code
 .hero-tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);padding:5px 14px;border-radius:100px;font-size:12px;color:var(--text-2);margin-bottom:28px;position:relative;z-index:1;font-weight:500}
 .hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.hero h1{font-size:clamp(40px,7vw,80px);font-weight:800;letter-spacing:-.035em;line-height:1.05;text-align:center;position:relative;z-index:1;margin-bottom:20px}
+.hero h1{font-size:clamp(36px,6.5vw,72px);font-weight:800;letter-spacing:-.035em;line-height:1.08;text-align:center;position:relative;z-index:1;margin-bottom:20px}
 .hero h1 .highlight{color:var(--amber)}
-.hero-sub{font-size:clamp(16px,2.2vw,20px);color:var(--text-2);text-align:center;max-width:520px;margin-bottom:40px;position:relative;z-index:1;line-height:1.5}
+.hero h1 .highlight-2{color:var(--green)}
+.hero-sub{font-size:clamp(15px,2vw,18px);color:var(--text-2);text-align:center;max-width:560px;margin-bottom:40px;position:relative;z-index:1;line-height:1.6}
 .hero-cta{display:flex;gap:12px;position:relative;z-index:1;flex-wrap:wrap;justify-content:center}
 .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--amber);color:#000;padding:12px 28px;border-radius:10px;font-weight:700;font-size:15px;transition:all .2s;box-shadow:0 4px 24px rgba(245,158,11,.25)}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 32px rgba(245,158,11,.35)}
 .btn-ghost{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border-light);color:var(--text);padding:12px 28px;border-radius:10px;font-weight:600;font-size:15px;transition:all .15s}
 .btn-ghost:hover{border-color:#3a3a44;background:var(--surface-2)}
 
-/* ===== Terminal ===== */
-.terminal{width:100%;max-width:680px;margin:56px auto 0;position:relative;z-index:1;border-radius:12px;overflow:hidden;border:1px solid var(--border-light);box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.02)}
-.terminal-bar{height:36px;background:var(--surface-2);display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--border)}
-.terminal-bar .dots{display:flex;gap:6px}
-.terminal-bar .dots span{width:11px;height:11px;border-radius:50%}
-.terminal-bar .dots .r{background:#ff5f57}
-.terminal-bar .dots .y{background:#febc2e}
-.terminal-bar .dots .g{background:#28c840}
-.terminal-bar .title{font-size:12px;color:var(--text-3);margin-left:8px;font-family:'SF Mono',monospace}
-.terminal-body{background:#0c0c0e;padding:20px 24px;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.8;min-height:280px;color:var(--text-2)}
-.terminal-body .line{white-space:pre-wrap;word-break:break-all}
-.terminal-body .prompt{color:var(--amber)}
-.terminal-body .cmd{color:var(--text)}
-.terminal-body .out{color:var(--text-2)}
-.terminal-body .ok{color:var(--green)}
-.terminal-body .warn{color:var(--amber)}
-.terminal-body .info{color:var(--blue)}
-.terminal-body .link{color:#60a5fa;text-decoration:underline;text-underline-offset:2px}
-.terminal-body .cursor{display:inline-block;width:8px;height:15px;background:var(--amber);vertical-align:text-bottom;animation:cursor-blink 1s infinite}
-@keyframes cursor-blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+/* ===== Chat Demo ===== */
+.chat-demo{width:100%;max-width:680px;margin:56px auto 0;position:relative;z-index:1;border-radius:16px;overflow:hidden;border:1px solid var(--border-light);box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.02);background:var(--bg-2)}
+.chat-header{height:44px;background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border)}
+.chat-header .title{font-size:12px;color:var(--text-3);font-weight:500;display:flex;align-items:center;gap:6px}
+.chat-header .title .ai-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)}
+.chat-header .badge{font-size:11px;color:var(--amber);background:var(--amber-glow);padding:3px 10px;border-radius:100px;font-weight:600}
+.chat-body{padding:20px;display:flex;flex-direction:column;gap:14px;min-height:420px}
+.chat-msg{display:flex;gap:10px;max-width:88%;animation:msgIn .4s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.user{align-self:flex-end;flex-direction:row-reverse}
+.chat-avatar{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.chat-avatar.ai{background:var(--amber-glow);color:var(--amber)}
+.chat-avatar.user{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border-light)}
+.chat-bubble{padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.6}
+.chat-msg.user .chat-bubble{background:var(--amber);color:#000;border-radius:12px 12px 4px 12px;font-weight:500}
+.chat-msg.ai .chat-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px 12px 12px 4px;color:var(--text)}
+.chat-bubble .link-card{display:flex;align-items:center;gap:10px;margin-top:8px;padding:10px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border)}
+.chat-bubble .link-card .thumb{width:48px;height:48px;border-radius:6px;background:var(--surface-2);flex-shrink:0;overflow:hidden}
+.chat-bubble .link-card .thumb img{width:100%;height:100%;object-fit:cover}
+.chat-bubble .link-card .info{flex:1;min-width:0}
+.chat-bubble .link-card .info .t{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-bubble .link-card .info .s{font-size:11px;color:var(--text-3);margin-top:2px}
+.chat-bubble .quality-list{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.chat-bubble .quality-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border);font-size:13px}
+.chat-bubble .quality-item .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.chat-bubble .quality-item .tag.high{background:var(--amber-glow);color:var(--amber)}
+.chat-bubble .quality-item .tag.mid{background:var(--green-glow);color:var(--green)}
+.chat-bubble .quality-item .tag.low{background:rgba(96,165,250,.12);color:#60a5fa}
+.chat-bubble .quality-item .size{color:var(--text-3);font-size:12px;margin-left:auto}
+.chat-bubble .download-result{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.chat-bubble .download-result .item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2)}
+.chat-bubble .download-result .item .check{color:var(--green);font-weight:bold}
+.chat-typing{display:inline-flex;gap:4px;align-items:center;padding:4px 0}
+.chat-typing span{width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:typing 1.2s infinite}
+.chat-typing span:nth-child(2){animation-delay:.2s}
+.chat-typing span:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
 
 /* ===== Section ===== */
 .section{padding:80px 24px;max-width:1080px;margin:0 auto}
 .section-label{font-size:12px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
 .section-title{font-size:clamp(28px,4.5vw,40px);font-weight:800;letter-spacing:-.025em;margin-bottom:12px}
-.section-desc{color:var(--text-2);font-size:16px;max-width:520px;margin-bottom:48px}
+.section-desc{color:var(--text-2);font-size:16px;max-width:560px;margin-bottom:48px}
 
-/* ===== Features (inline, not cards) ===== */
+/* ===== How it works ===== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.step{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;position:relative;transition:all .2s}
+.step:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.step-num{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:16px;letter-spacing:.05em}
+.step-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.step-icon svg{width:22px;height:22px}
+.step-icon.amber{background:var(--amber-glow);color:var(--amber)}
+.step-icon.green{background:var(--green-glow);color:var(--green)}
+.step-icon.purple{background:var(--purple-glow);color:var(--purple)}
+.step h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.step p{color:var(--text-2);font-size:14px;line-height:1.65}
+
+/* ===== Features ===== */
 .features{display:flex;flex-direction:column;gap:0}
 .feature-row{display:flex;align-items:flex-start;gap:24px;padding:28px 0;border-top:1px solid var(--border)}
 .feature-row:last-child{border-bottom:1px solid var(--border)}
@@ -81,7 +112,7 @@ code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code
 .feature-icon.amber{background:var(--amber-glow);color:var(--amber)}
 .feature-icon.green{background:var(--green-glow);color:var(--green)}
 .feature-icon.blue{background:rgba(59,130,246,.12);color:var(--blue)}
-.feature-icon.red{background:rgba(239,68,68,.12);color:var(--red)}
+.feature-icon.purple{background:var(--purple-glow);color:var(--purple)}
 .feature-body h3{font-size:16px;font-weight:700;margin-bottom:4px}
 .feature-body p{color:var(--text-2);font-size:14px;line-height:1.65}
 
@@ -92,22 +123,65 @@ code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code
 .platform.hot{border-color:rgba(245,158,11,.2);background:rgba(245,158,11,.03)}
 .platform.hot:hover{border-color:rgba(245,158,11,.3)}
 
-/* ===== Download ===== */
-.download{background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px;text-align:center}
-.download h2{font-size:clamp(28px,4.5vw,40px);font-weight:800;letter-spacing:-.025em;margin-bottom:12px}
-.download p{color:var(--text-2);font-size:16px;margin-bottom:40px}
-.download-options{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:680px;margin:0 auto}
-.dl-card{background:var(--surface);border:1px solid var(--border-light);border-radius:12px;padding:24px;text-align:left;flex:1;min-width:260px;transition:all .2s}
-.dl-card:hover{border-color:#33333d;transform:translateY(-2px)}
-.dl-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.dl-card-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.dl-card-icon.zip{background:var(--amber-glow);color:var(--amber)}
-.dl-card-icon.gh{background:rgba(255,255,255,.06);color:var(--text)}
-.dl-card h4{font-size:15px;font-weight:700}
-.dl-card p{font-size:13px;color:var(--text-2);margin-bottom:14px;line-height:1.5}
-.dl-card .dl-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--amber);transition:gap .15s}
-.dl-card .dl-btn:hover{gap:10px}
-.dl-card .dl-meta{font-size:11px;color:var(--text-3);margin-top:6px;font-family:'SF Mono',monospace}
+/* ===== Use Cases ===== */
+.use-cases{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.use-case{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all .2s}
+.use-case:hover{border-color:var(--border-light);transform:translateY(-2px)}
+.use-case .uc-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.use-case .uc-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.use-case .uc-icon svg{width:18px;height:18px}
+.use-case h4{font-size:15px;font-weight:700}
+.use-case p{font-size:14px;color:var(--text-2);line-height:1.6}
+.use-case .example{margin-top:10px;padding:10px 12px;background:var(--bg-2);border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--text-3)}
+.use-case .example .quote{color:var(--text-2);font-style:italic}
+
+/* ===== Install ===== */
+.install{background:var(--bg-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 24px;text-align:center}
+.install h2{font-size:clamp(28px,4.5vw,40px);font-weight:800;letter-spacing:-.025em;margin-bottom:12px}
+.install>p{color:var(--text-2);font-size:16px;margin-bottom:48px}
+.install-methods{display:flex;flex-direction:column;gap:16px;max-width:680px;margin:0 auto;text-align:left}
+.install-card{background:var(--surface);border:1px solid var(--border-light);border-radius:14px;padding:24px 28px;position:relative;transition:all .2s;display:flex;flex-direction:row;align-items:flex-start;gap:20px}
+.install-card:hover{border-color:#33333d;transform:translateY(-2px)}
+.install-card.recommended{border-color:rgba(245,158,11,.3);background:linear-gradient(180deg,rgba(245,158,11,.04),var(--surface) 40%)}
+.install-card.recommended:hover{border-color:rgba(245,158,11,.45)}
+.install-card .badge-rec{position:absolute;top:-10px;right:24px;background:var(--amber);color:#000;font-size:11px;font-weight:700;padding:3px 12px;border-radius:100px;letter-spacing:.03em}
+.install-card .ic-num{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0}
+.install-card .ic-num.amber{background:var(--amber);color:#000}
+.install-card .ic-num.green{background:var(--green);color:#000}
+.install-card .ic-num.blue{background:var(--blue);color:#fff}
+.install-card .ic-body{flex:1;min-width:0}
+.install-card h4{font-size:16px;font-weight:700;margin-bottom:6px}
+.install-card .ic-desc{font-size:13px;color:var(--text-2);line-height:1.6;margin-bottom:14px}
+.install-card .ic-action{margin-top:auto}
+.install-card .ic-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;padding:8px 16px;border-radius:8px;transition:all .15s;cursor:pointer;border:none}
+.install-card .ic-btn.amber{background:var(--amber);color:#000}
+.install-card .ic-btn.amber:hover{background:#fbbf24;transform:translateY(-1px)}
+.install-card .ic-btn.green{background:var(--green);color:#000}
+.install-card .ic-btn.green:hover{background:#34d399;transform:translateY(-1px)}
+.install-card .ic-btn.blue{background:var(--blue);color:#fff}
+.install-card .ic-btn.blue:hover{background:#60a5fa;transform:translateY(-1px)}
+.install-card .ic-btn.ghost{background:var(--surface-2);color:var(--text);border:1px solid var(--border-light)}
+.install-card .ic-btn.ghost:hover{border-color:#3a3a44;background:var(--surface)}
+.install-card .ic-btn svg{width:15px;height:15px}
+.install-card .ic-hint{font-size:12px;color:var(--text-3);margin-top:10px}
+.install-card .prompt-box{margin-top:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text-2);line-height:1.6;position:relative;font-family:'SF Mono','Fira Code',monospace}
+.install-card .prompt-box .copy-btn{position:absolute;top:8px;right:8px;background:var(--surface-2);border:1px solid var(--border-light);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--text-2);cursor:pointer;transition:all .15s;font-family:sans-serif}
+.install-card .prompt-box .copy-btn:hover{border-color:var(--amber);color:var(--amber)}
+.install-card .prompt-box .copy-btn.copied{background:var(--green);color:#000;border-color:var(--green)}
+.install-card .prompt-box .prompt-text{padding-right:60px}
+.install-card .tip{font-size:12px;color:var(--text-3);margin-top:10px;padding:6px 10px;background:var(--bg-2);border-radius:6px;border:1px solid var(--border)}
+.install-footer{margin-top:40px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+/* ===== Download result in chat ===== */
+.chat-bubble .dl-info{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.chat-bubble .dl-row{display:flex;gap:8px;font-size:13px;line-height:1.7}
+.chat-bubble .dl-label{color:var(--text-3);min-width:36px;flex-shrink:0}
+.chat-bubble .dl-val{color:var(--text)}
+.chat-bubble .dl-section-title{font-size:13px;color:var(--text-2);font-weight:600;margin:10px 0 6px}
+.chat-bubble .dl-files{display:flex;flex-direction:column;gap:5px}
+.chat-bubble .dl-file{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);padding:6px 10px;background:var(--bg-2);border-radius:6px;border:1px solid var(--border)}
+.chat-bubble .dl-check{color:var(--green);font-weight:bold;flex-shrink:0}
+.chat-bubble .dl-desc{color:var(--text-3);font-size:12px}
+.chat-bubble .dl-path{font-size:12px;color:var(--text-3);background:var(--bg-2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-family:'SF Mono','Fira Code',monospace;word-break:break-all}
 
 /* ===== Footer ===== */
 .footer{padding:40px 24px;text-align:center;border-top:1px solid var(--border)}
@@ -124,94 +198,185 @@ code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code
   .nav{padding:0 16px}
   .nav-links{gap:12px}
   .nav-links a:not(.btn){display:none}
+  .steps{grid-template-columns:1fr}
+  .use-cases{grid-template-columns:1fr}
   .feature-row{flex-direction:column;gap:12px}
   .platforms{grid-template-columns:repeat(2,1fr)}
-  .terminal-body{font-size:11px;padding:16px}
+  .chat-body{padding:14px;min-height:380px}
+  .chat-bubble{font-size:13px}
 }
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <div class="nav-logo"><span class="dot"></span>ExtractVideoSkill</div>
+  <div class="nav-logo"><img src="logo.png" alt="logo">AI全平台视频下载SKILL</div>
   <div class="nav-links">
-    <a href="#features">特性</a>
+    <a href="#how">工作原理</a>
+    <a href="#features">能力</a>
     <a href="#platforms">平台</a>
-    <a href="#quickstart">使用</a>
-    <a href="#download" class="btn">下载</a>
+    <a href="#install" class="btn">安装</a>
+    <a href="https://github.com/engrecho/all-platform-video-extract" target="_blank" rel="noopener" class="btn" style="display:inline-flex;align-items:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
   </div>
 </nav>
 
 <!-- ===== Hero ===== -->
 <section class="hero">
   <div class="hero-bg"></div>
-  <div class="hero-tag">v2.0.0 · AES 加密发布版</div>
-  <h1>全网视频<br><span class="highlight">一键解析下载</span></h1>
-  <p class="hero-sub">抖音、快手、B站、YouTube、小红书等 1000+ 平台。零依赖，仅需 Node.js。</p>
+  <div class="hero-tag">v2.0.0 · 支持 1000+ 平台</div>
+  <h1>AI 全平台视频下载<br><span class="highlight">SKILL</span></h1>
+  <p class="hero-sub">安装这个 Skill 后，把视频链接发给 AI，它就能自动帮你解析和下载。抖音、快手、B站、YouTube、小红书……全都不在话下。</p>
   <div class="hero-cta">
-    <a href="#download" class="btn-primary">
+    <a href="#install" class="btn-primary">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      立即下载
+      立即安装
     </a>
-    <a href="#quickstart" class="btn-ghost">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-      快速开始
+    <a href="#how" class="btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      看看怎么用
     </a>
   </div>
 
-  <!-- Terminal Demo -->
-  <div class="terminal" id="terminal">
-    <div class="terminal-bar">
-      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-      <span class="title">terminal — video_extract.cjs</span>
+  <!-- Chat Demo -->
+  <div class="chat-demo">
+    <div class="chat-header">
+      <span class="title"><span class="ai-dot"></span> AI 助手 · 已安装 AI全平台视频下载SKILL</span>
+      <span class="badge">Skill 已激活</span>
     </div>
-    <div class="terminal-body" id="terminal-body">
+    <div class="chat-body" id="chat-body">
       <!-- Animated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ===== How It Works ===== -->
+<section id="how" class="section">
+  <div class="section-label reveal">工作原理</div>
+  <h2 class="section-title reveal">三步搞定，就这么简单</h2>
+  <p class="section-desc reveal">不需要写代码，不需要装软件。安装 Skill 后，直接跟 AI 说话就行。</p>
+
+  <div class="steps">
+    <div class="step reveal">
+      <div class="step-num">STEP 01</div>
+      <div class="step-icon amber">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <h3>安装 Skill</h3>
+      <p>下载并安装到你的 AI 助手中，一次安装永久生效。就像给 AI 装了一个"视频解析插件"。</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">STEP 02</div>
+      <div class="step-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+      </div>
+      <h3>粘贴链接</h3>
+      <p>在抖音、快手、B站等 App 里点"分享"，把链接发给 AI。也可以直接说"帮我下载这个视频"。</p>
+    </div>
+    <div class="step reveal">
+      <div class="step-num">STEP 03</div>
+      <div class="step-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3>自动搞定</h3>
+      <p>AI 自动解析视频信息，给你下载链接，或者直接帮你下载到电脑上。全程不需要你做任何操作。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Use Cases ===== -->
+<section class="section">
+  <div class="section-label reveal">使用场景</div>
+  <h2 class="section-title reveal">你会怎么用它</h2>
+  <p class="section-desc reveal">不管是保存喜欢的视频，还是收藏公众号文章，一句话就能搞定。</p>
+
+  <div class="use-cases">
+    <div class="use-case reveal">
+      <div class="uc-header">
+        <div class="uc-icon" style="background:var(--amber-glow);color:var(--amber)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h4>保存喜欢的视频</h4>
+      </div>
+      <p>刷到好看的视频怕被删除？发给 AI，永久保存到本地。</p>
+      <div class="example"><span class="quote">"帮我下载这个抖音视频"</span></div>
+    </div>
+    <div class="use-case reveal">
+      <div class="uc-header">
+        <div class="uc-icon" style="background:var(--green-glow);color:var(--green)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h4>收藏公众号文章</h4>
+      </div>
+      <p>公众号文章太有价值？AI 帮你保存成离线文档，图片也一并下载。</p>
+      <div class="example"><span class="quote">"把这篇公众号文章保存下来"</span></div>
+    </div>
+    <div class="use-case reveal">
+      <div class="uc-header">
+        <div class="uc-icon" style="background:rgba(59,130,246,.12);color:var(--blue)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <h4>下载国外平台视频</h4>
+      </div>
+      <p>YouTube、TikTok、Twitter 等海外平台，同样一个链接就能搞定。</p>
+      <div class="example"><span class="quote">"下载这个 YouTube 视频：https://..."</span></div>
+    </div>
+    <div class="use-case reveal">
+      <div class="uc-header">
+        <div class="uc-icon" style="background:var(--purple-glow);color:var(--purple)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </div>
+        <h4>批量下载多个视频</h4>
+      </div>
+      <p>一次性发多个链接给 AI，它会逐个帮你解析下载，不用一个一个来。</p>
+      <div class="example"><span class="quote">"帮我下载这三个视频：链接1 链接2 链接3"</span></div>
     </div>
   </div>
 </section>
 
 <!-- ===== Features ===== -->
 <section id="features" class="section">
-  <div class="section-label reveal">特性</div>
-  <h2 class="section-title reveal">为什么选择它</h2>
-  <p class="section-desc reveal">从解析到下载，一个工具搞定全部流程。不装依赖，不解压运行库。</p>
+  <div class="section-label reveal">能力</div>
+  <h2 class="section-title reveal">它都能做什么</h2>
+  <p class="section-desc reveal">从解析到下载，从视频到文章，一个 Skill 全部搞定。</p>
 
   <div class="features">
     <div class="feature-row reveal">
       <div class="feature-icon amber">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       </div>
       <div class="feature-body">
-        <h3>零依赖运行</h3>
-        <p>仅依赖 Node.js 内置模块（crypto / fetch / child_process），无需 npm install，下载即用。</p>
+        <h3>支持 1000+ 平台</h3>
+        <p>抖音、快手、B站、YouTube、TikTok、小红书、微博、公众号等主流平台全覆盖。没列出的平台也能自动识别，基本你能想到的都支持。</p>
       </div>
     </div>
     <div class="feature-row reveal">
       <div class="feature-icon green">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </div>
       <div class="feature-body">
-        <h3>1000+ 平台</h3>
-        <p>抖音、快手、B站、YouTube、TikTok、小红书、微博、公众号等主流平台全覆盖，未列出的也能自动识别。</p>
+        <h3>一键下载到本地</h3>
+        <p>不只是给你链接，还能直接帮你把视频、音频、封面、图片全部下载到电脑上，自动整理好文件夹。</p>
       </div>
     </div>
     <div class="feature-row reveal">
       <div class="feature-icon blue">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       </div>
       <div class="feature-body">
-        <h3>一键下载</h3>
-        <p>解析后自动下载视频、音频、封面、所有图片到独立目录，公众号文章自动生成 markdown 离线副本。</p>
+        <h3>公众号文章离线保存</h3>
+        <p>发给 AI 一个公众号链接，它会把文章保存成文档，文章里的图片也自动下载到本地，断网也能看。</p>
       </div>
     </div>
     <div class="feature-row reveal">
-      <div class="feature-icon red">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <div class="feature-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       </div>
       <div class="feature-body">
-        <h3>加密发布</h3>
-        <p>发布版脚本经 AES-256-CBC 加密，源码不可直接查看。开发版与发布版分离，一键构建打包。</p>
+        <h3>多种清晰度可选</h3>
+        <p>AI 会列出所有可选的清晰度（1080p、720p、480p 等），你可以选择最合适的来下载，也可以全部保存。</p>
       </div>
     </div>
   </div>
@@ -221,7 +386,7 @@ code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code
 <section id="platforms" class="section">
   <div class="section-label reveal">平台</div>
   <h2 class="section-title reveal">支持平台</h2>
-  <p class="section-desc reveal">1000+ 平台，以下为已确认支持的部分列表</p>
+  <p class="section-desc reveal">1000+ 平台，以下为部分已确认支持的热门平台</p>
   <div class="platforms reveal">
     <div class="platform hot">抖音</div>
     <div class="platform hot">快手</div>
@@ -250,149 +415,137 @@ code,pre,.mono{font-family:'SF Mono','Fira Code','JetBrains Mono','Cascadia Code
   </div>
 </section>
 
-<!-- ===== Quick Start ===== -->
-<section id="quickstart" class="section">
-  <div class="section-label reveal">使用</div>
-  <h2 class="section-title reveal">快速开始</h2>
-  <p class="section-desc reveal">两种模式：仅解析获取链接，或直接下载到本地</p>
-
-  <div class="terminal reveal" style="max-width:680px">
-    <div class="terminal-bar">
-      <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-      <span class="title">terminal</span>
-    </div>
-    <div class="terminal-body" style="min-height:auto">
-      <div class="line"><span class="comment"># 仅解析 — 获取标题、封面、各清晰度下载直链</span></div>
-      <div class="line"><span class="prompt">$ </span><span class="cmd">node scripts/video_extract.cjs </span><span class="str">"8.94 复制打开抖音，看看【xxx的作品】..."</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="info">[1/5]</span> <span class="out">获取 cookie ...</span></div>
-      <div class="line"><span class="info">[2/5]</span> <span class="out">GET /auth/keys ...</span></div>
-      <div class="line"><span class="info">[3/5]</span> <span class="out">AES 加密 body ...</span></div>
-      <div class="line"><span class="info">[4/5]</span> <span class="out">RSA 分段加密 ...</span></div>
-      <div class="line"><span class="info">[5/5]</span> <span class="out">POST /api/video/cnSimpleExtract</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="ok">>>> 状态 = 200  耗时 = 5234 ms</span></div>
-      <div class="line"><span class="out">title: 出门在外身份是自己给的！！</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="out">共 3 个清晰度：</span></div>
-      <div class="line"><span class="warn">  [1080p]</span> <span class="out">mp4  size=12.3MB  direct=true</span></div>
-      <div class="line"><span class="out">    https://v26-dy.ixigua.com/...</span></div>
-      <div class="line"><span class="warn">  [720p]</span>  <span class="out">mp4  size=8.1MB   direct=true</span></div>
-      <div class="line"><span class="out">    https://v26-dy.ixigua.com/...</span></div>
-      <div class="line">&nbsp;</div>
-      <div class="line"><span class="comment"># 下载到本地</span></div>
-      <div class="line"><span class="prompt">$ </span><span class="cmd">node scripts/download_videos.cjs </span><span class="str">"8.94 复制打开抖音..."</span></div>
-      <div class="line"><span class="ok">✓ video.mp4   12.3MB</span></div>
-      <div class="line"><span class="ok">✓ audio.mp3    3.1MB</span></div>
-      <div class="line"><span class="ok">✓ cover.jpg    280KB</span></div>
-      <div class="line"><span class="ok">✓ info.json    saved</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Download ===== -->
-<section id="download" class="download">
-  <h2 class="reveal">下载使用</h2>
-  <p class="reveal">选择适合你的方式</p>
-  <div class="download-options">
-    <div class="dl-card reveal">
-      <div class="dl-card-head">
-        <div class="dl-card-icon zip">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+<!-- ===== Install ===== -->
+<section id="install" class="install">
+  <h2 class="reveal">安装方式</h2>
+  <p class="reveal">三种方式任选其一，让你的 AI 助手获得视频解析能力</p>
+  <div class="install-methods">
+    <!-- Method 1: SkillHub -->
+    <div class="install-card recommended reveal">
+      <span class="badge-rec">推荐</span>
+      <div class="ic-num amber">1</div>
+      <div class="ic-body">
+        <h4>SkillHub 安装</h4>
+        <p class="ic-desc">通过 SkillHub 技能商店一键安装，自动适配你的 AI 工具，最省心。</p>
+        <div class="ic-action">
+          <a href="https://skillhub.cn/skills/all-platform-video-extract" class="ic-btn amber" target="_blank" rel="noopener">
+            前往 SkillHub 安装
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <div class="ic-hint">支持 Claude Code / Cursor / Windsurf / Codex 等</div>
         </div>
-        <h4>直接下载</h4>
       </div>
-      <p>加密发布版 zip 包，解压即用，无需安装依赖。</p>
-      <a href="https://extractvideoskill.bajiaolu.cn/ExtractVideoSkill.zip" class="dl-btn">
-        下载 zip
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
-      <div class="dl-meta">v2.0.0 · ~60KB · AES-256-CBC</div>
     </div>
-    <div class="dl-card reveal">
-      <div class="dl-card-head">
-        <div class="dl-card-icon gh">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+
+    <!-- Method 2: AI Dialog -->
+    <div class="install-card reveal">
+      <div class="ic-num green">2</div>
+      <div class="ic-body">
+        <h4>对话 AI 安装</h4>
+        <p class="ic-desc">把下方提示词发给你的 AI 助手，它会自动帮你完成安装。</p>
+        <div class="ic-action">
+          <div class="prompt-box">
+            <button class="copy-btn" onclick="copyPrompt(this)">复制</button>
+            <div class="prompt-text"> 请帮我下载这个SKILL, 并安装在默认的SKILL目录,下载地址, https://all-platform-video-extract.widetoken.cn/skill.zip </div>
+          </div>
+          <div class="ic-hint">粘贴到任意支持 Skill 的 AI 对话窗口即可</div>
         </div>
-        <h4>GitHub 仓库</h4>
       </div>
-      <p>查看源码、提交 Issue、参与贡献。含 dev/ 明文源码和 release/ 加密版。</p>
-      <a href="https://github.com/engrecho/ExtractVideoSkill" class="dl-btn">
-        前往 GitHub
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
-      <div class="dl-meta">engrecho/ExtractVideoSkill</div>
+    </div>
+
+    <!-- Method 3: Manual -->
+    <div class="install-card reveal">
+      <div class="ic-num blue">3</div>
+      <div class="ic-body">
+        <h4>手动安装</h4>
+        <p class="ic-desc">下载压缩包, 自行解压后放到 AI 助手的 Skills 目录中，重启即可使用。</p>
+        <div class="ic-action">
+          <a href="https://all-platform-video-extract.widetoken.cn/skill.zip" class="ic-btn ghost">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 zip 压缩包
+          </a>
+          <div class="ic-hint">文件很小，秒下载</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <footer class="footer">
-  <p>ExtractVideoSkill v2.0.0 · 仅供个人学习研究使用 · <a href="https://github.com/engrecho/ExtractVideoSkill">GitHub</a> · <a href="https://extractvideoskill.bajiaolu.cn">extractvideoskill.bajiaolu.cn</a></p>
+  <p>AI全平台视频下载SKILL v2.0.0 · 仅供个人学习研究使用 · <a href="https://github.com/engrecho/all-platform-video-extract">GitHub</a> · <a href="https://all-platform-video-extract.widetoken.cn">all-platform-video-extract.widetoken.cn</a></p>
 </footer>
 
 <script>
-// ===== Terminal typing animation =====
-const terminalLines = [
-  {t:'<span class="comment"># 解析抖音视频</span>', d:300},
-  {t:'<span class="prompt">$ </span><span class="cmd">node scripts/video_extract.cjs </span><span class="str">"8.94 复制打开抖音..."</span>', d:600},
-  {t:'', d:200},
-  {t:'<span class="info">[1/5]</span> <span class="out">获取 cookie ...</span>', d:400},
-  {t:'<span class="info">[2/5]</span> <span class="out">GET /auth/keys ...</span>', d:350},
-  {t:'<span class="info">[3/5]</span> <span class="out">AES-128-CBC 加密 body ...</span>', d:350},
-  {t:'<span class="info">[4/5]</span> <span class="out">RSA-1024 分段加密 ...</span>', d:350},
-  {t:'<span class="info">[5/5]</span> <span class="out">POST /api/video/cnSimpleExtract</span>', d:500},
-  {t:'', d:200},
-  {t:'<span class="ok">>>> 状态 = 200  耗时 = 5234 ms</span>', d:300},
-  {t:'<span class="out">title: 出门在外身份是自己给的！！</span>', d:200},
-  {t:'<span class="out">vid: 7398xxx  平台: douyin</span>', d:200},
-  {t:'', d:200},
-  {t:'<span class="out">共 3 个清晰度：</span>', d:200},
-  {t:'<span class="warn">  [1080p]</span> <span class="out">mp4  12.3MB  direct=true</span>', d:200},
-  {t:'<span class="out">    https://v26-dy.ixigua.com/video/...</span>', d:150},
-  {t:'<span class="warn">  [720p]</span>  <span class="out">mp4  8.1MB   direct=true</span>', d:200},
-  {t:'<span class="out">    https://v26-dy.ixigua.com/video/...</span>', d:150},
-  {t:'<span class="warn">  [480p]</span>  <span class="out">mp4  4.7MB   direct=true</span>', d:200},
-  {t:'<span class="out">    https://v26-dy.ixigua.com/video/...</span>', d:300},
-  {t:'', d:300},
-  {t:'<span class="comment"># 下载到本地</span>', d:300},
-  {t:'<span class="prompt">$ </span><span class="cmd">node scripts/download_videos.cjs </span><span class="str">"8.94 复制打开抖音..."</span>', d:500},
-  {t:'<span class="ok">✓ video.mp4   12.3MB</span>', d:200},
-  {t:'<span class="ok">✓ audio.mp3    3.1MB</span>', d:200},
-  {t:'<span class="ok">✓ cover.jpg    280KB</span>', d:200},
-  {t:'<span class="ok">✓ info.json    saved</span>', d:200},
-  {t:'<span class="ok">✓ done → douyin-7398xxx-出门在外身份是自己给的/</span>', d:500},
-];
-
-const termBody = document.getElementById('terminal-body');
-let lineIdx = 0;
-
-function typeNext() {
-  if (lineIdx >= terminalLines.length) {
-    // Reset after 4 seconds
+// ===== Copy prompt =====
+function copyPrompt(btn) {
+  const text = btn.parentElement.querySelector('.prompt-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
     setTimeout(() => {
-      termBody.innerHTML = '';
-      lineIdx = 0;
-      typeNext();
-    }, 4000);
-    return;
-  }
-  const line = terminalLines[lineIdx];
-  const div = document.createElement('div');
-  div.className = 'line';
-  div.innerHTML = line.t;
-  termBody.appendChild(div);
-  lineIdx++;
-  setTimeout(typeNext, line.d);
+      btn.textContent = '复制';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
 }
 
-// Start when terminal is visible
-const termObserver = new IntersectionObserver((entries) => {
-  if (entries[0].isIntersecting) {
-    typeNext();
-    termObserver.disconnect();
+// ===== Chat Demo Animation =====
+const chatMessages = [
+  {role:'user', html:'帮我把抖音视频解析并保存下来吧 <br><span style="font-size:12px;opacity:.7">0.25 复制打开抖音，看看【XX作品】出门在外身份是自己给的！！ # 生活... https://v.douyin.com/E123456/  </span>', delay:800},
+  // {role:'ai', typing:true, delay:1200},
+  // {role:'ai', html:'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:16px">🎬</span> 解析成功！</div><div class="link-card"><div class="thumb" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></div><div class="info"><div class="t">出门在外身份是自己给的！！</div><div class="s">抖音 · 7398xxx</div></div></div><div class="quality-list"><div class="quality-item"><span class="tag high">1080p</span> MP4 视频 <span class="size">12.3 MB</span></div><div class="quality-item"><span class="tag mid">720p</span> MP4 视频 <span class="size">8.1 MB</span></div><div class="quality-item"><span class="tag low">480p</span> MP4 视频 <span class="size">4.7 MB</span></div></div>', delay:300, replace:true},
+  // {role:'user', html:'帮我把视频下载下来保存本地', delay:1500},
+  {role:'ai', typing:true, delay:2000},
+  {role:'ai', html:'<div class="dl-info"><div class="dl-row"><span class="dl-label">标题</span><span class="dl-val">出门在外身份是自己给的！！ # 生活</span></div><div class="dl-row"><span class="dl-label">作者</span><span class="dl-val">superAI</span></div><div class="dl-row"><span class="dl-label">平台</span><span class="dl-val">抖音</span></div></div><div class="dl-section-title">包含内容：</div><div class="dl-files"><div class="dl-file"><span class="dl-check">✓</span> video.mp4 <span class="dl-desc">主视频（约 32 MB）</span></div><div class="dl-file"><span class="dl-check">✓</span> audio.mp3 <span class="dl-desc">audio.mp3（约 2 MB）</span></div><div class="dl-file"><span class="dl-check">✓</span> cover.jpg <span class="dl-desc">封面图</span></div></div><div class="dl-section-title">文件位置：</div><div class="dl-path">~/downloaded/douyin-EiwyBQJ3HpQ-出门在外身份是自己给的/</div>', delay:400, replace:true},
+  {role:'user', html:'太方便了！👍', delay:2000},
+];
+
+
+const chatBody = document.getElementById('chat-body');
+let msgIdx = 0;
+
+function playChat() {
+  if (msgIdx >= chatMessages.length) {
+    setTimeout(() => {
+      chatBody.innerHTML = '';
+      msgIdx = 0;
+      playChat();
+    }, 5000);
+    return;
   }
-}, { threshold: 0.3 });
-termObserver.observe(document.getElementById('terminal'));
+  const msg = chatMessages[msgIdx];
+
+  if (msg.replace) {
+    // Remove last typing indicator
+    const typing = chatBody.querySelector('.chat-typing-msg');
+    if (typing) typing.remove();
+  }
+
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'chat-msg ' + msg.role;
+
+  if (msg.typing) {
+    msgDiv.classList.add('chat-typing-msg');
+    msgDiv.innerHTML = '<div class="chat-avatar ' + msg.role + '">' + (msg.role === 'ai' ? '🤖' : '😊') + '</div><div class="chat-bubble"><div class="chat-typing"><span></span><span></span><span></span></div></div>';
+  } else {
+    msgDiv.innerHTML = '<div class="chat-avatar ' + msg.role + '">' + (msg.role === 'ai' ? '🤖' : '😊') + '</div><div class="chat-bubble">' + msg.html + '</div>';
+  }
+
+  chatBody.appendChild(msgDiv);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  msgIdx++;
+
+  setTimeout(playChat, msg.delay);
+}
+
+// Start when chat demo is visible
+const chatObserver = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting) {
+    playChat();
+    chatObserver.disconnect();
+  }
+}, { threshold: 0.2 });
+chatObserver.observe(document.getElementById('chat-body'));
 
 // ===== Scroll reveal =====
 const revealObserver = new IntersectionObserver((entries) => {

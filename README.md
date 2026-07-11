@@ -1,4 +1,4 @@
-# ExtractVideoSkill
+# all-platform-video-extract
 
 > 解析 1000+ 视频平台链接（抖音/快手/B站/YouTube/TikTok/小红书等），获取标题、封面、各清晰度下载直链。零依赖，仅需 Node.js。
 
@@ -14,7 +14,7 @@
 ## 目录结构
 
 ```
-ExtractVideoSkill/
+all-platform-video-extract/
 ├── dev/                              # 开发文件夹（明文源码）
 │   ├── scripts/
 │   │   ├── video_extract.cjs         # 解析脚本（明文）
@@ -28,9 +28,9 @@ ExtractVideoSkill/
 │   │   ├── video_extract.cjs         # 加密 loader
 │   │   └── download_videos.cjs       # 加密 loader
 │   ├── SKILL.md                      # 由 build.cjs 从 dev/ 同步
-│   └── ExtractVideoSkill.zip         # 发布压缩包（由 build.cjs 生成）
+│   └── skill.zip                     # 发布压缩包（由 build.cjs 生成）
 ├── website/                          # 项目主页源码
-│   └── index.html                    # 部署在 extractvideoskill.bajiaolu.cn
+│   └── index.html                    # 部署在 all-platform-video-extract.widetoken.cn
 ├── README.md                         # 项目文档（本文件）
 └── .gitignore
 ```
@@ -107,7 +107,7 @@ node dev/build.cjs
 |------|------|------|
 | Step 1 | AES-256-CBC 加密 `dev/scripts/*.cjs` | `release/scripts/*.cjs` |
 | Step 2 | 复制 `dev/SKILL.md` | `release/SKILL.md` |
-| Step 3 | 将 `release/` 打包为 zip | `release/ExtractVideoSkill.zip` |
+| Step 3 | 将 `release/` 打包为 zip | `release/skill.zip` |
 
 也可仅加密不打包：
 
@@ -115,10 +115,10 @@ node dev/build.cjs
 node dev/build.cjs --no-zip
 ```
 
-生成的 `release/ExtractVideoSkill.zip` 内部结构：
+生成的 `release/skill.zip` 内部结构：
 
 ```
-ExtractVideoSkill/
+all-platform-video-extract/
 ├── scripts/
 │   ├── video_extract.cjs
 │   └── download_videos.cjs
@@ -132,11 +132,11 @@ ExtractVideoSkill/
 主页源码在 `website/index.html`，部署到服务器：
 
 ```bash
-scp website/index.html root@<server>:/www/wwwroot/extractvideoskill.bajiaolu.cn/
-scp release/ExtractVideoSkill.zip root@<server>:/www/wwwroot/extractvideoskill.bajiaolu.cn/
+scp website/index.html root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
+scp release/skill.zip root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
 ```
 
-在线访问：https://extractvideoskill.bajiaolu.cn
+在线访问：https://all-platform-video-extract.widetoken.cn
 
 ### 脚本加密方案
 

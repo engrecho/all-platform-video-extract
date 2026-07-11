@@ -1,6 +1,6 @@
 ---
 slug: all-platform-video-extract
-displayName: ExtractVideoSkill
+displayName: all-platform-video-extract
 version: 2.0.0
 summary: 解析 1000+ 视频平台链接，获取标题、封面、各清晰度下载直链。
 license: MIT
@@ -9,10 +9,10 @@ description: 解析 1000+ 视频平台的视频链接（抖音/快手/B站/YouTu
 agent_created: true
 links:
   - label: GitHub
-    url: https://github.com/engrecho/ExtractVideoSkill
+    url: https://github.com/engrecho/all-platform-video-extract
 ---
 
-# ExtractVideoSkill
+# all-platform-video-extract
 
 解析视频分享文本或 URL，获取标题、封面、下载直链。支持抖音、快手、B站、YouTube、TikTok、小红书等 1000+ 平台。
 
