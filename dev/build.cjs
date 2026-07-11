@@ -1,0 +1,179 @@
+#!/usr/bin/env node
+/**
+ * 加密构建 + 发布打包脚本
+ *
+ * 工作流：
+ *   dev/SKILL.md        → release/SKILL.md        （直接复制）
+ *   dev/scripts/*.cjs   → release/scripts/*.cjs    （AES-256-CBC 加密）
+ *   release/            → dist/ExtractVideoSkill.zip
+ *
+ * 用法：
+ *   node dev/build.cjs              # 加密 + 同步 + 打包 zip
+ *   node dev/build.cjs --no-zip     # 加密 + 同步，不打包
+ *
+ * 依赖：仅 Node.js 内置模块
+ */
+
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+
+const PROJECT_ROOT = path.resolve(__dirname, '..');
+const DEV_DIR = path.join(__dirname, 'scripts');
+const RELEASE_DIR = path.join(PROJECT_ROOT, 'release');
+const OUT_DIR = path.join(RELEASE_DIR, 'scripts');
+const DIST_DIR = path.join(PROJECT_ROOT, 'dist');
+const ZIP_PATH = path.join(DIST_DIR, 'ExtractVideoSkill.zip');
+
+const NO_ZIP = process.argv.includes('--no-zip');
+
+// ======== 1. AES-256-CBC 加密 ========
+
+function bytesToArr(buf) {
+  const offset = Math.floor(Math.random() * 200) + 50;
+  const arr = [];
+  for (const b of buf) {
+    arr.push(b + offset);
+  }
+  return { arr, offset };
+}
+
+function buildLoader(sourceCode, scriptName) {
+  const key = crypto.randomBytes(32);
+  const iv = crypto.randomBytes(16);
+
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  const encrypted = Buffer.concat([
+    cipher.update(sourceCode, 'utf8'),
+    cipher.final(),
+  ]).toString('base64');
+
+  const k = bytesToArr(key);
+  const v = bytesToArr(iv);
+
+  return `#!/usr/bin/env node
+/* ${scriptName} — encrypted build, do not edit manually */
+/* Generated at ${new Date().toISOString()} */
+"use strict";
+const crypto=require("crypto");
+const vm=require("vm");
+const _k=Buffer.from([${k.arr.join(',')}]).map(function(b){return b-${k.offset};});
+const _v=Buffer.from([${v.arr.join(',')}]).map(function(b){return b-${v.offset};});
+const _e="${encrypted}";
+const _d=crypto.createDecipheriv("aes-256-cbc",_k,_v);
+const _c=_d.update(_e,"base64","utf8")+_d.final("utf8");
+const _w=vm.compileFunction(_c,["exports","require","module","__filename","__dirname"],{filename:__filename});
+_w(exports,require,module,__filename,__dirname);
+`;
+}
+
+// ======== 2. 文件操作 ========
+
+function ensureDir(dir) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+function copyRecursive(src, dest) {
+  if (fs.statSync(src).isDirectory()) {
+    ensureDir(dest);
+    for (const item of fs.readdirSync(src)) {
+      copyRecursive(path.join(src, item), path.join(dest, item));
+    }
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+}
+
+// ======== 3. 打包 zip ========
+
+function packageZip() {
+  ensureDir(DIST_DIR);
+
+  // 清理旧 zip
+  if (fs.existsSync(ZIP_PATH)) fs.unlinkSync(ZIP_PATH);
+
+  // 用临时目录 staging，确保 zip 内顶层目录名为 ExtractVideoSkill
+  const tmpDir = path.join(DIST_DIR, '.tmp_package');
+  if (fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true });
+  const stagedDir = path.join(tmpDir, 'ExtractVideoSkill');
+  ensureDir(stagedDir);
+
+  // 复制 release 内容到临时目录
+  for (const item of fs.readdirSync(RELEASE_DIR)) {
+    if (item.startsWith('.')) continue;
+    copyRecursive(path.join(RELEASE_DIR, item), path.join(stagedDir, item));
+  }
+
+  // 打包
+  execSync(
+    `cd "${tmpDir}" && zip -r "${ZIP_PATH}" ExtractVideoSkill -x "*.DS_Store" -x "__MACOSX*"`,
+    { stdio: 'pipe' }
+  );
+
+  // 清理临时目录
+  fs.rmSync(tmpDir, { recursive: true });
+
+  const zipSize = fs.statSync(ZIP_PATH).size;
+  console.log(`  [ZIP] ${path.relative(PROJECT_ROOT, ZIP_PATH)}  ${(zipSize / 1024).toFixed(1)}KB`);
+}
+
+// ======== 主流程 ========
+
+function main() {
+  console.log('╔══════════════════════════════════════════╗');
+  console.log('║   ExtractVideoSkill — 加密构建 + 打包     ║');
+  console.log('╚══════════════════════════════════════════╝\n');
+
+  // --- Step 1: 加密脚本 ---
+  ensureDir(OUT_DIR);
+
+  const files = fs.readdirSync(DEV_DIR).filter(f => f.endsWith('.cjs'));
+  if (files.length === 0) {
+    console.error('错误：未找到 dev/scripts/*.cjs');
+    process.exit(1);
+  }
+
+  console.log('【Step 1/3】加密脚本');
+  console.log(`  源: ${path.relative(PROJECT_ROOT, DEV_DIR)}/`);
+  console.log(`  出: ${path.relative(PROJECT_ROOT, OUT_DIR)}/\n`);
+
+  for (const file of files) {
+    const src = fs.readFileSync(path.join(DEV_DIR, file), 'utf8');
+    const loader = buildLoader(src, file);
+    fs.writeFileSync(path.join(OUT_DIR, file), loader, 'utf8');
+    console.log(`  [OK] ${file}  ${Buffer.byteLength(src)}B → ${Buffer.byteLength(loader)}B`);
+  }
+
+  // --- Step 2: 同步 SKILL.md ---
+  console.log('\n【Step 2/3】同步 SKILL.md');
+  const skillSrc = path.join(__dirname, 'SKILL.md');
+  const skillDest = path.join(RELEASE_DIR, 'SKILL.md');
+  if (fs.existsSync(skillSrc)) {
+    fs.copyFileSync(skillSrc, skillDest);
+    console.log(`  [OK] dev/SKILL.md → release/SKILL.md`);
+  } else {
+    console.error('  [ERROR] dev/SKILL.md 不存在！');
+    process.exit(1);
+  }
+
+  // --- Step 3: 打包 zip ---
+  if (NO_ZIP) {
+    console.log('\n【Step 3/3】跳过打包（--no-zip）');
+  } else {
+    console.log('\n【Step 3/3】打包 ExtractVideoSkill.zip');
+    packageZip();
+  }
+
+  // --- 汇总 ---
+  console.log('\n═══════════════════════════════════════════');
+  console.log('构建完成！');
+  console.log(`  加密脚本: ${files.length} 个 → release/scripts/`);
+  console.log(`  SKILL.md: 已同步 → release/SKILL.md`);
+  if (!NO_ZIP) {
+    console.log(`  发布包:   ${path.relative(PROJECT_ROOT, ZIP_PATH)}`);
+  }
+  console.log('═══════════════════════════════════════════\n');
+}
+
+main();

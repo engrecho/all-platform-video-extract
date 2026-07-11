@@ -30,6 +30,9 @@ pnpm-debug.log*
 # WorkBuddy 临时
 .workbuddy/
 
+# 构建产物
+dist/
+
 # 临时下载（用户用 download_videos.cjs 产生的内容不应入库）
 tmp_downloads/
 gv_downloads/
