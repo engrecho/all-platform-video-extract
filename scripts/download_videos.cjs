@@ -10,9 +10,13 @@
  *
  * 配置文件：
  *   ~/.extract_video_config.json
- *   { "outputDir": "~/extract_video" }
+ *   {
+ *     "outputDir": "~/extract_video",
+ *     "maxParallel": 3,
+ *     "downloadInterval": 3
+ *   }
  *   首次运行时由 AI 创建，脚本自动读取。
- *   环境变量 GV_OUTPUT 可覆盖配置文件的值。
+ *   环境变量 GV_OUTPUT 可覆盖配置文件的 outputDir。
  *
  * 目录命名规范（解决长路径问题）：
  *   <输出根目录>/<平台>-<vid>-<标题截断>/
@@ -46,8 +50,10 @@ const NODE_BIN = process.env.GV_NODE || require('child_process').execSync('which
 const TITLE_MAX = 60;          // 标题部分最多 60 字符
 const DOWNLOAD_TIMEOUT = 60000; // 单文件下载 60s
 const MAX_CONCURRENCY = 3;     // 单个视频内文件下载并发数
-const MAX_VIDEO_PARALLEL = 3;  // 多视频最大并行数
-const VIDEO_INTERVAL = 3000;   // 多视频之间的启动间隔（ms）
+
+// 默认值，可被配置文件覆盖
+const DEFAULT_MAX_PARALLEL = 3;
+const DEFAULT_INTERVAL_SEC = 3;
 
 // ---------- 配置文件 ----------
 
@@ -69,17 +75,21 @@ function readConfig() {
   }
 }
 
-function getOutputRoot() {
-  // 环境变量优先
-  if (process.env.GV_OUTPUT) return resolveHome(process.env.GV_OUTPUT);
-  // 配置文件
-  const cfg = readConfig();
-  if (cfg && cfg.outputDir) return resolveHome(cfg.outputDir);
-  // 默认
-  return path.join(os.homedir(), 'extract_video');
+function getConfig() {
+  const cfg = readConfig() || {};
+  return {
+    outputDir: process.env.GV_OUTPUT
+      ? resolveHome(process.env.GV_OUTPUT)
+      : (cfg.outputDir ? resolveHome(cfg.outputDir) : path.join(os.homedir(), 'extract_video')),
+    maxParallel: typeof cfg.maxParallel === 'number' && cfg.maxParallel > 0 ? cfg.maxParallel : DEFAULT_MAX_PARALLEL,
+    downloadInterval: typeof cfg.downloadInterval === 'number' && cfg.downloadInterval >= 0 ? cfg.downloadInterval : DEFAULT_INTERVAL_SEC,
+  };
 }
 
-const OUTPUT_ROOT = getOutputRoot();
+const _config = getConfig();
+const OUTPUT_ROOT = _config.outputDir;
+const MAX_VIDEO_PARALLEL = _config.maxParallel;
+const VIDEO_INTERVAL = _config.downloadInterval * 1000; // 转为毫秒
 
 // ---------- 工具函数 ----------
 
@@ -390,13 +400,14 @@ async function main() {
 
 配置文件：
   ~/.extract_video_config.json
-  { "outputDir": "~/extract_video" }
+  { "outputDir": "~/extract_video", "maxParallel": 3, "downloadInterval": 3 }
 
 环境变量：
   GV_OUTPUT    输出根目录（覆盖配置文件）
 
-并行限制：
-  最大并行数 3，每个视频间隔 3 秒
+并行限制（从配置文件读取，以上为默认值）：
+  maxParallel       最大并行数
+  downloadInterval  每个视频间隔（秒）
 
 目录命名：<平台>-<vid>-<标题截断60字>/
 `);

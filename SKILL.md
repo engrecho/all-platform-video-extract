@@ -24,23 +24,29 @@ links: GitHub https://github.com/engrecho/all-platform-video-extract
 
 ## 首次加载：初始化配置
 
-当本 Skill 首次被使用时（检测到 `~/.extract_video_config.json` 不存在），**必须**执行以下初始化流程：
+当本 Skill 首次被使用时（检测到 `~/.extract_video_config.json` 不存在），**必须**执行以下初始化流程，一次性询问三项配置：
 
 1. 询问用户：「视频下载保存到哪个目录？默认是 `~/extract_video`，是否需要修改？」
-2. 如果用户明确给出目录，使用用户指定的目录
-3. 如果用户说「不用改」「默认就行」「可以」等未明确修改的回复，使用 `~/extract_video`
-4. 将最终目录写入配置文件：
+2. 如果用户明确给出目录，使用用户指定的目录；如果用户说「不用改」「默认就行」「可以」等未明确修改的回复，使用 `~/extract_video`
+3. 询问用户：「多视频同时下载时，最大并行几个？默认 3，是否需要修改？」
+4. 如果用户明确给出数字，使用用户指定的值；否则使用默认值 `3`
+5. 询问用户：「每个视频之间的下载间隔多少秒？默认 3 秒，是否需要修改？」
+6. 如果用户明确给出数字，使用用户指定的值；否则使用默认值 `3`
+7. 将最终配置写入配置文件：
 
 ```bash
-mkdir -p ~/.config
 cat > ~/.extract_video_config.json << 'EOF'
-{"outputDir": "~/extract_video"}
+{
+  "outputDir": "~/extract_video",
+  "maxParallel": 3,
+  "downloadInterval": 3
+}
 EOF
 ```
 
-（如果用户指定了其他目录，替换 `outputDir` 的值）
+（根据用户的选择替换对应值）
 
-5. 后续所有下载操作都从该配置文件读取输出目录，不再重复询问
+8. 后续所有下载操作都从该配置文件读取配置，不再重复询问
 
 **检测配置是否已存在：**
 
@@ -49,6 +55,14 @@ cat ~/.extract_video_config.json 2>/dev/null
 ```
 
 如果输出有效 JSON 则跳过初始化；如果报错或文件不存在，则执行上述初始化流程。
+
+配置文件字段说明：
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `outputDir` | string | `~/extract_video` | 视频下载保存目录 |
+| `maxParallel` | number | `3` | 多视频同时下载的最大并行数 |
+| `downloadInterval` | number | `3` | 每个视频之间的启动间隔（秒） |
 
 ## Quick Start
 
@@ -71,7 +85,7 @@ cat ~/.extract_video_config.json 2>/dev/null
 ```
 
 - 如果不存在或无效 → 执行「首次加载：初始化配置」流程
-- 如果存在 → 从中读取 `outputDir` 作为下载根目录
+- 如果存在 → 从中读取 `outputDir`、`maxParallel`、`downloadInterval` 作为下载配置
 
 ### Step 2: 识别输入
 
@@ -115,10 +129,10 @@ node scripts/download_videos.cjs "<链接1>" "<链接2>" "<链接3>"
 node scripts/download_videos.cjs urls.txt
 ```
 
-**多任务并行限制：**
-- 最大并行数：3（同时最多处理 3 个视频）
-- 下载间隔：3 秒（每个视频之间间隔 3s，避免请求过于频繁）
-- 脚本已内置并行控制和间隔逻辑，无需手动处理
+**多任务并行限制（从配置文件读取）：**
+- 最大并行数：默认 3（可由用户在配置文件中修改 `maxParallel`）
+- 下载间隔：默认 3 秒（可由用户在配置文件中修改 `downloadInterval`）
+- 脚本自动从 `~/.extract_video_config.json` 读取这两个值
 
 下载目录结构：`<输出根目录>/<平台>-<vid>-<标题>/`，含 video.mp4、cover、images、content.md（公众号）。
 
@@ -127,4 +141,4 @@ node scripts/download_videos.cjs urls.txt
 - 链接完整性：呈现任何 URL 时必须完整输出，不得省略
 - 链接时效性：下载链接通常几小时有效，解析成功后建议立即下载
 - B 站下载需加 `Referer: https://www.bilibili.com` 头，脚本已自动处理
-- 配置文件路径：`~/.extract_video_config.json`，记录用户选择的下载目录
+- 配置文件路径：`~/.extract_video_config.json`，记录用户选择的下载目录、最大并行数、下载间隔
