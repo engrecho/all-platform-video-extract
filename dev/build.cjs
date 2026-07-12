@@ -1,20 +1,19 @@
 #!/usr/bin/env node
 /**
- * 加密构建 + 发布打包脚本
+ * 明文构建 + 发布打包脚本
  *
  * 工作流：
  *   dev/SKILL.md        → release/SKILL.md        （直接复制）
- *   dev/scripts/*.cjs   → release/scripts/*.cjs    （AES-256-CBC 加密）
+ *   dev/scripts/*.cjs   → release/scripts/*.cjs    （直接复制，明文）
  *   release/            → release/skill.zip
  *
  * 用法：
- *   node dev/build.cjs              # 加密 + 同步 + 打包 zip
- *   node dev/build.cjs --no-zip     # 加密 + 同步，不打包
+ *   node dev/build.cjs              # 同步 + 打包 zip
+ *   node dev/build.cjs --no-zip     # 同步，不打包
  *
  * 依赖：仅 Node.js 内置模块
  */
 
-const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -27,47 +26,7 @@ const ZIP_PATH = path.join(RELEASE_DIR, 'skill.zip');
 
 const NO_ZIP = process.argv.includes('--no-zip');
 
-// ======== 1. AES-256-CBC 加密 ========
-
-function bytesToArr(buf) {
-  const offset = Math.floor(Math.random() * 200) + 50;
-  const arr = [];
-  for (const b of buf) {
-    arr.push(b + offset);
-  }
-  return { arr, offset };
-}
-
-function buildLoader(sourceCode, scriptName) {
-  const key = crypto.randomBytes(32);
-  const iv = crypto.randomBytes(16);
-
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-  const encrypted = Buffer.concat([
-    cipher.update(sourceCode, 'utf8'),
-    cipher.final(),
-  ]).toString('base64');
-
-  const k = bytesToArr(key);
-  const v = bytesToArr(iv);
-
-  return `#!/usr/bin/env node
-/* ${scriptName} — encrypted build, do not edit manually */
-/* Generated at ${new Date().toISOString()} */
-"use strict";
-const crypto=require("crypto");
-const vm=require("vm");
-const _k=Buffer.from([${k.arr.join(',')}]).map(function(b){return b-${k.offset};});
-const _v=Buffer.from([${v.arr.join(',')}]).map(function(b){return b-${v.offset};});
-const _e="${encrypted}";
-const _d=crypto.createDecipheriv("aes-256-cbc",_k,_v);
-const _c=_d.update(_e,"base64","utf8")+_d.final("utf8");
-const _w=vm.compileFunction(_c,["exports","require","module","__filename","__dirname"],{filename:__filename});
-_w(exports,require,module,__filename,__dirname);
-`;
-}
-
-// ======== 2. 文件操作 ========
+// ======== 文件操作 ========
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -84,7 +43,7 @@ function copyRecursive(src, dest) {
   }
 }
 
-// ======== 3. 打包 zip ========
+// ======== 打包 zip ========
 
 function packageZip() {
   // 清理旧 zip
@@ -119,10 +78,10 @@ function packageZip() {
 
 function main() {
   console.log('╔══════════════════════════════════════════╗');
-  console.log('║   all-platform-video-extract — 加密构建 + 打包     ║');
+  console.log('║   all-platform-video-extract — 明文构建 + 打包     ║');
   console.log('╚══════════════════════════════════════════╝\n');
 
-  // --- Step 1: 加密脚本 ---
+  // --- Step 1: 复制脚本（明文） ---
   ensureDir(OUT_DIR);
 
   const files = fs.readdirSync(DEV_DIR).filter(f => f.endsWith('.cjs'));
@@ -131,15 +90,16 @@ function main() {
     process.exit(1);
   }
 
-  console.log('【Step 1/3】加密脚本');
+  console.log('【Step 1/3】复制脚本（明文）');
   console.log(`  源: ${path.relative(PROJECT_ROOT, DEV_DIR)}/`);
   console.log(`  出: ${path.relative(PROJECT_ROOT, OUT_DIR)}/\n`);
 
   for (const file of files) {
-    const src = fs.readFileSync(path.join(DEV_DIR, file), 'utf8');
-    const loader = buildLoader(src, file);
-    fs.writeFileSync(path.join(OUT_DIR, file), loader, 'utf8');
-    console.log(`  [OK] ${file}  ${Buffer.byteLength(src)}B → ${Buffer.byteLength(loader)}B`);
+    const src = path.join(DEV_DIR, file);
+    const dest = path.join(OUT_DIR, file);
+    fs.copyFileSync(src, dest);
+    const size = fs.statSync(dest).size;
+    console.log(`  [OK] ${file}  ${size}B`);
   }
 
   // --- Step 2: 同步 SKILL.md ---
@@ -165,7 +125,7 @@ function main() {
   // --- 汇总 ---
   console.log('\n═══════════════════════════════════════════');
   console.log('构建完成！');
-  console.log(`  加密脚本: ${files.length} 个 → release/scripts/`);
+  console.log(`  明文脚本: ${files.length} 个 → release/scripts/`);
   console.log(`  SKILL.md: 已同步 → release/SKILL.md`);
   if (!NO_ZIP) {
     console.log(`  发布包:   ${path.relative(PROJECT_ROOT, ZIP_PATH)}`);

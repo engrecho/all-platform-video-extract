@@ -1,13 +1,297 @@
 #!/usr/bin/env node
-/* video_extract.cjs — encrypted build, do not edit manually */
-/* Generated at 2026-07-11T09:21:33.764Z */
-"use strict";
-const crypto=require("crypto");
-const vm=require("vm");
-const _k=Buffer.from([389,404,364,357,302,393,412,431,380,214,372,301,276,260,364,250,372,211,318,399,256,232,322,364,296,308,215,221,354,206,262,270]).map(function(b){return b-192;});
-const _v=Buffer.from([338,242,307,236,164,312,385,271,194,332,233,369,227,212,268,382]).map(function(b){return b-133;});
-const _e="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";
-const _d=crypto.createDecipheriv("aes-256-cbc",_k,_v);
-const _c=_d.update(_e,"base64","utf8")+_d.final("utf8");
-const _w=vm.compileFunction(_c,["exports","require","module","__filename","__dirname"],{filename:__filename});
-_w(exports,require,module,__filename,__dirname);
+/**
+ * 视频解析脚本（AES-128-CBC + RSA-1024 加密接口）
+ *
+ * 功能：
+ *   1) 自动访问解析服务获取 cookie（网站免登录）
+ *   2) 复刻前端加密流程（AES-128-CBC + RSA-1024）
+ *   3) 调用 /api/video/cnSimpleExtract 解析视频
+ *
+ * 用法：
+ *   加密模式（推荐）：node video_extract.cjs "<视频分享文本或URL>"
+ *   重放模式：          node video_extract.cjs --replay "<抓包 body>"
+ *   交互模式：          node video_extract.cjs
+ *
+ * 加密流程（复刻 Cnx7Ipy2-1.js / D7yAekyA.js）：
+ *   1) GET /api/auth/keys        -> { k1: 公钥(base64), k2: RSA加密的AES密钥(base64) }
+ *   2) aesKey = publicDecrypt(k2)  // 用公钥 RSA 解密得到 AES key
+ *   3) step1 = AES-128-CBC( JSON.stringify({url,list,pageNo,pageSize}), aesKey, IV )
+ *   4) final = RSA-encryptLong(step1)  // JSEncrypt.encryptLong，117字符/段
+ *   5) POST /api/video/cnSimpleExtract, body=final
+ *
+ * 依赖：仅 node 内置模块（crypto, fetch/undici）
+ * 注意：- 解析视频通常 3~15 秒，脚本默认超时 60s
+ *       - /auth/keys 的公钥有效期约 5 分钟，超时需要重新拉取
+ *       - cookie 自动从 https://greenvideo.cc/ 获取，无需手动提供
+ */
+
+const crypto = require('crypto');
+
+const HOST   = 'https://greenvideo.cc';
+const IV_B64 = 'a2Vkb3VAODk4OSE2MzIzMw==';  // 固定 IV: 'kedou@8989!63233'
+
+// -------- 自动获取 Cookie --------
+
+async function fetchCookie() {
+  const r = await fetch(HOST + '/', {
+    method: 'GET',
+    headers: {
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'accept': 'text/html,application/xhtml+xml',
+      'accept-language': 'zh-CN,zh;q=0.9',
+    },
+  });
+  if (r.status !== 200) throw new Error(`访问首页失败 status=${r.status}`);
+  const setCookies = r.headers.getSetCookie ? r.headers.getSetCookie() : (r.headers.raw()['set-cookie'] || []);
+  if (!setCookies.length) {
+    console.warn('  [warn] 首页未返回 Set-Cookie，将尝试不带 cookie 调用');
+    return '';
+  }
+  // 拼接为请求用的 cookie 字符串
+  const cookieStr = setCookies.map(c => c.split(';')[0]).join('; ');
+  console.log(`  [cookie] 获取到 ${setCookies.length} 个 cookie`);
+  return cookieStr;
+}
+
+// -------- 加密流程 --------
+
+// RSA 公钥解密（PKCS#1 v1.5，用公钥做 doPublic 运算）
+function decryptByPublicKey(k2Base64, publicPem) {
+  const buf = Buffer.from(k2Base64, 'base64');
+  const key = crypto.createPublicKey(publicPem);
+  return crypto.publicDecrypt({ key, padding: crypto.constants.RSA_PKCS1_PADDING }, buf).toString('utf8');
+}
+
+// AES-128-CBC + PKCS7，输出 base64（等价 CryptoJS.AES.encrypt）
+function aesEncryptString(plainJson, aesKeyUtf8, ivBase64) {
+  const iv  = Buffer.from(ivBase64, 'base64');
+  const key = Buffer.from(aesKeyUtf8, 'utf8');
+  const algo = `aes-${key.length * 8}-cbc`;
+  const enc = crypto.createCipheriv(algo, key, iv);
+  return enc.update(plainJson, 'utf8', 'base64') + enc.final('base64');
+}
+
+// JSEncrypt.encryptLong 正确复刻
+// 关键：JSEncrypt 的 E 函数（hex2b64）是自定义 base64，
+//       每 3 个 hex 字符（12 bits）转为 2 个 base64 字符
+//       不能用标准的 Buffer.from(hex, 'hex').toString('base64')
+const F_CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function E_hex2b64(hex) {
+  let i, n, o = '';
+  for (i = 0; i + 3 <= hex.length; i += 3) {
+    n = parseInt(hex.substring(i, i + 3), 16);
+    o += F_CHARSET.charAt(n >> 6) + F_CHARSET.charAt(n & 63);
+  }
+  if (i + 1 === hex.length) {
+    n = parseInt(hex.substring(i, i + 1), 16);
+    o += F_CHARSET.charAt(n << 2);
+  } else if (i + 2 === hex.length) {
+    n = parseInt(hex.substring(i, i + 2), 16);
+    o += F_CHARSET.charAt(n >> 2) + F_CHARSET.charAt((n & 3) << 4);
+  }
+  while ((o.length & 3) > 0) o += '=';
+  return o;
+}
+
+function encryptLongBase64(plainBase64, publicPem) {
+  const keyObj = crypto.createPublicKey(publicPem);
+  const parts = plainBase64.match(/.{1,117}/g);
+  let allHex = '';
+  for (const p of (parts || [])) {
+    // JSEncrypt 把 base64 字符串当 UTF-8 字节送入 RSA 加密
+    const bytes = Buffer.from(p, 'utf8');
+    const enc = crypto.publicEncrypt(
+      { key: keyObj, padding: crypto.constants.RSA_PKCS1_PADDING },
+      bytes
+    );
+    allHex += enc.toString('hex');
+  }
+  return E_hex2b64(allHex);
+}
+
+// -------- API 调用 --------
+
+async function fetchKeys(cookie) {
+  const r = await fetch(`${HOST}/api/auth/keys`, {
+    method: 'GET',
+    headers: { 'cookie': cookie, 'user-agent': 'Mozilla/5.0' },
+  });
+  if (r.status !== 200) throw new Error(`拉 /auth/keys 失败 status=${r.status}`);
+  const j = await r.json();
+  if (j.code !== 200) throw new Error('/auth/keys 返回非 200: ' + JSON.stringify(j));
+  const { k1, k2 } = j.data;
+  const k1Pem = '-----BEGIN PUBLIC KEY-----\n' + k1.match(/.{1,64}/g).join('\n') + '\n-----END PUBLIC KEY-----\n';
+  const aesKey = decryptByPublicKey(k2, k1Pem);
+  return { k1Pem, aesKey };
+}
+
+async function encryptAndCall(inputUrl, cookie) {
+  console.log('\n[1/5] 获取 cookie ...');
+  const finalCookie = cookie || await fetchCookie();
+
+  console.log('[2/5] GET /auth/keys ...');
+  const { k1Pem, aesKey } = await fetchKeys(finalCookie);
+  console.log(`      AES key = ${JSON.stringify(aesKey)} (${Buffer.byteLength(aesKey, 'utf8')} 字节)`);
+
+  const bodyObj = { url: inputUrl, list: undefined, pageNo: undefined, pageSize: undefined };
+  const bodyJson = JSON.stringify(bodyObj);
+  console.log(`[3/5] body JSON 长度 = ${Buffer.byteLength(bodyJson, 'utf8')} 字节`);
+
+  const step1 = aesEncryptString(bodyJson, aesKey, IV_B64);
+  console.log(`[4/5] AES 输出 base64 长度 = ${step1.length}`);
+
+  const final = encryptLongBase64(step1, k1Pem);
+  console.log(`[5/5] 最终加密 body 长度 = ${final.length} 字符`);
+
+  const headers = {
+    'accept': 'application/json',
+    'accept-language': 'zh-CN,zh;q=0.9',
+    'content-type': 'application/json',
+    'cookie': finalCookie,
+    'dnt': '1',
+    'kdsystem': 'GreenVideo',
+    'origin': HOST,
+    'priority': 'u=1, i',
+    'sec-ch-ua': '"Chromium";v="120", "Google Chrome";v="120", "Not/A)Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"macOS"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  };
+
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(new Error('客户端超时 60s')), 60000);
+  const t0 = Date.now();
+  try {
+    const r = await fetch(`${HOST}/api/video/cnSimpleExtract`, {
+      method: 'POST',
+      headers,
+      body: final,
+      signal: ac.signal,
+    });
+    const txt = await r.text();
+    const t1 = Date.now();
+    console.log(`\n>>> POST 状态 = ${r.status}  耗时 = ${t1 - t0} ms`);
+    return { status: r.status, text: txt, time: t1 - t0 };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function replayBody(encryptedBody, cookie) {
+  const finalCookie = cookie || await fetchCookie();
+  const headers = {
+    'accept': 'application/json',
+    'content-type': 'application/json',
+    'cookie': finalCookie,
+    'kdsystem': 'GreenVideo',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+  };
+
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(new Error('客户端超时 60s')), 60000);
+  const t0 = Date.now();
+  try {
+    const r = await fetch(`${HOST}/api/video/cnSimpleExtract`, {
+      method: 'POST',
+      headers,
+      body: encryptedBody,
+      signal: ac.signal,
+    });
+    const txt = await r.text();
+    const t1 = Date.now();
+    console.log(`\n>>> POST 状态 = ${r.status}  耗时 = ${t1 - t0} ms`);
+    return { status: r.status, text: txt, time: t1 - t0 };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// -------- 入口 --------
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0) {
+    console.log(`
+用法：
+  加密模式（推荐）：node video_extract.cjs "<视频分享文本或URL>"
+  重放模式：          node video_extract.cjs --replay "<抓包 body>"
+  交互模式：          node video_extract.cjs
+
+示例：
+  node video_extract.cjs "8.94 复制打开抖音，看看【高逊丨Ai行业全案的作品】..."
+  node video_extract.cjs "https://www.bilibili.com/video/BV1ypdgBCE9B/"
+
+输出：
+  成功（code=200）时，会打印 videoItemVoList 中各清晰度的下载链接
+  失败（code=530）时，说明加密 body 与服务端期望不一致，可尝试 --replay 模式重放浏览器抓包的 body
+`);
+    process.exit(0);
+  }
+
+  const isJsonMode = args.includes('--json');
+  const argsNoFlag = args.filter(a => a !== '--json');
+
+  let result;
+  try {
+    if (argsNoFlag[0] === '--replay') {
+      const body = argsNoFlag.slice(1).join(' ');
+      if (!body) { console.error('错误：--replay 需要传入抓包的 body 字符串'); process.exit(1); }
+      result = await replayBody(body);
+    } else {
+      const inputUrl = argsNoFlag.join(' ');
+      result = await encryptAndCall(inputUrl);
+    }
+  } catch (e) {
+    if (e.name === 'AbortError' || e.message?.includes('超时')) {
+      console.error('\n!! 请求超时（60s），视频解析时间较长，可尝试重试');
+    } else {
+      console.error('\n!! 失败 !!', e.message || e);
+    }
+    process.exit(1);
+  }
+
+  // --json 模式：只把原始 JSON 输出到 stdout（用特殊 marker 分隔），所有日志走 stderr
+  if (isJsonMode) {
+    try {
+      const j = JSON.parse(result.text);
+      console.log('__GV_JSON_BEGIN__');
+      console.log(JSON.stringify(j));
+      console.log('__GV_JSON_END__');
+    } catch (e) {
+      console.error('!! 响应非 JSON：', e.message);
+      process.exit(1);
+    }
+    return;
+  }
+
+  console.log('\n=== 接口返回 ===');
+  console.log('status:', result.status);
+  try {
+    const j = JSON.parse(result.text);
+    console.log('code:', j.code, '  message:', j.message || '');
+    if (j.code === 200 && j.data) {
+      console.log('vid:', j.data.vid, '  host:', j.data.host, '  title:', j.data.displayTitle || '');
+      const items = j.data.videoItemVoList || [];
+      console.log(`\n共 ${items.length} 个清晰度：`);
+      for (const v of items) {
+        console.log(`  [${v.qualityAlias || v.quality}] ${v.fileType}  size=${(v.size / 1024 / 1024).toFixed(1)}MB  direct=${v.canDirectDownload}`);
+        console.log(`    ${v.baseUrl}`);
+      }
+    } else if (j.code === 530) {
+      console.log('\n!! code=530：加密验证失败');
+      console.log('   可能原因：1) /auth/keys 公钥过期（>5分钟） 2) 输入的 URL 文本与浏览器实际发送的不一致');
+      console.log('   建议：用浏览器抓包拿到加密 body，然后用 --replay 模式重放');
+    }
+  } catch (e) {
+    console.log('raw:', result.text);
+  }
+}
+
+main().catch(e => {
+  console.error('!! 未捕获错误 !!', e);
+  process.exit(1);
+});
