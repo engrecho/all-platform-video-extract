@@ -8,23 +8,25 @@
  *   node download_videos.cjs "<分享文本1>" ["<分享文本2>" ...]
  *   node download_videos.cjs < urlfile.txt      （每行一个链接/分享文本）
  *
+ * 配置文件：
+ *   ~/.extract_video_config.json
+ *   { "outputDir": "~/extract_video" }
+ *   首次运行时由 AI 创建，脚本自动读取。
+ *   环境变量 GV_OUTPUT 可覆盖配置文件的值。
+ *
  * 目录命名规范（解决长路径问题）：
  *   <输出根目录>/<平台>-<vid>-<标题截断>/
- *     ├── info.json              # 视频元信息（title/host/vid/code/message/原始时间戳）
- *     ├── cover.<ext>            # 封面（按实际扩展名）
+ *     ├── info.json              # 视频元信息
+ *     ├── cover.<ext>            # 封面
  *     ├── video.mp4              # 视频（如有）
  *     ├── audio.mp3              # 音频（如有）
  *     ├── image-001.jpg          # 第 1 张图（如有）
- *     ├── image-002.jpg
  *     ├── ...
- *     └── content.md             # 公众号/文章类平台，markdown 文本独立保存；图片链接替换为相对路径
+ *     └── content.md             # 公众号/文章类，markdown + 图片本地化
  *
- * 标题截断策略（macOS APFS 兼容 + 同步盘安全）：
- *   - 截取前 60 个字符
- *   - 移除文件系统非法字符：/ \ : * ? " < > |
- *   - 合并连续空白为一个空格
- *   - 去除首尾空白
- *   - 整目录名控制在 ~120 字符以内
+ * 多任务并行限制：
+ *   - 最大并行数：3（同时最多处理 3 个视频）
+ *   - 下载间隔：3 秒（每个视频之间间隔 3s）
  *
  * 行为：调用 video_extract.cjs 解析后，逐个下载 + 公众号生成 MD。
  */
@@ -34,30 +36,59 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const os = require('os');
 const { URL } = require('url');
 
 const SKILL_DIR = path.resolve(__dirname);
 const EXTRACT_SCRIPT = path.join(SKILL_DIR, 'video_extract.cjs');
-const OUTPUT_ROOT = process.env.GV_OUTPUT || path.join(process.cwd(), 'gv_downloads');
 const NODE_BIN = process.env.GV_NODE || require('child_process').execSync('which node').toString().trim();
 
 const TITLE_MAX = 60;          // 标题部分最多 60 字符
 const DOWNLOAD_TIMEOUT = 60000; // 单文件下载 60s
-const MAX_CONCURRENCY = 4;
+const MAX_CONCURRENCY = 3;     // 单个视频内文件下载并发数
+const MAX_VIDEO_PARALLEL = 3;  // 多视频最大并行数
+const VIDEO_INTERVAL = 3000;   // 多视频之间的启动间隔（ms）
+
+// ---------- 配置文件 ----------
+
+const CONFIG_PATH = path.join(os.homedir(), '.extract_video_config.json');
+
+function resolveHome(p) {
+  if (!p) return p;
+  if (p.startsWith('~/')) return path.join(os.homedir(), p.slice(2));
+  if (p === '~') return os.homedir();
+  return p;
+}
+
+function readConfig() {
+  try {
+    const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function getOutputRoot() {
+  // 环境变量优先
+  if (process.env.GV_OUTPUT) return resolveHome(process.env.GV_OUTPUT);
+  // 配置文件
+  const cfg = readConfig();
+  if (cfg && cfg.outputDir) return resolveHome(cfg.outputDir);
+  // 默认
+  return path.join(os.homedir(), 'extract_video');
+}
+
+const OUTPUT_ROOT = getOutputRoot();
 
 // ---------- 工具函数 ----------
 
 function sanitizeTitle(title) {
   if (!title) return 'untitled';
-  // 去掉 HTML 标签
   let t = String(title).replace(/<[^>]+>/g, '');
-  // 去掉表情符号等高 unicode（保留中文/英文字符）
   t = t.replace(/[\u{1F000}-\u{1FFFF}\u{2700}-\u{27BF}\u{2600}-\u{26FF}\u{2300}-\u{23FF}]/gu, '');
-  // 移除文件系统非法字符（含全角/半角变体，跨平台安全）
   t = t.replace(/[\\/:*?"<>|\uFF5C\u2502]/g, ' ');
-  // 合并空白
   t = t.replace(/\s+/g, ' ').trim();
-  // 截断
   if (t.length > TITLE_MAX) t = t.slice(0, TITLE_MAX).trim();
   return t || 'untitled';
 }
@@ -81,6 +112,10 @@ function extFromUrl(url, fallback) {
   return fallback || 'bin';
 }
 
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
 function downloadFile(url, destPath, headers = {}) {
   return new Promise((resolve, reject) => {
     let parsed;
@@ -91,7 +126,6 @@ function downloadFile(url, destPath, headers = {}) {
       headers: { 'User-Agent': 'Mozilla/5.0', ...headers },
     };
     const req = lib.request(parsed, opts, (res) => {
-      // 跟随 3xx 重定向
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         const redirect = res.headers.location.startsWith('http')
           ? res.headers.location
@@ -116,7 +150,7 @@ function downloadFile(url, destPath, headers = {}) {
   });
 }
 
-// 并发控制
+// 单个视频内文件并发下载
 async function pMap(items, mapper, concurrency = MAX_CONCURRENCY) {
   const results = new Array(items.length);
   let i = 0;
@@ -130,7 +164,42 @@ async function pMap(items, mapper, concurrency = MAX_CONCURRENCY) {
   return results;
 }
 
-// ---------- 调用 extract 脚本（用 --json 模式拿原始 JSON） ----------
+// 多视频并行控制（最大并行数 + 间隔）
+async function runVideosWithLimit(inputs, processor) {
+  const results = new Array(inputs.length);
+  let nextIdx = 0;
+  let activeCount = 0;
+  let launchIdx = 0;
+
+  return new Promise((resolve) => {
+    const launchNext = () => {
+      // 达到最大并行或没有更多任务时停止启动
+      while (activeCount < MAX_VIDEO_PARALLEL && launchIdx < inputs.length) {
+        const idx = launchIdx++;
+        activeCount++;
+
+        // 非第一个任务，延迟启动
+        const delay = idx > 0 ? VIDEO_INTERVAL : 0;
+        setTimeout(() => {
+          processor(inputs[idx], idx)
+            .then(r => { results[idx] = r; })
+            .catch(e => { results[idx] = { input: inputs[idx], ok: false, reason: e.message }; })
+            .finally(() => {
+              activeCount--;
+              if (launchIdx < inputs.length) {
+                launchNext();
+              } else if (activeCount === 0) {
+                resolve(results);
+              }
+            });
+        }, delay);
+      }
+    };
+    launchNext();
+  });
+}
+
+// ---------- 调用 extract 脚本 ----------
 
 function callExtract(input) {
   try {
@@ -144,10 +213,6 @@ function callExtract(input) {
   }
 }
 
-/**
- * 从 extract 脚本的 --json 模式输出中解析出原始接口返回。
- * 脚本会用 marker 分隔：__GV_JSON_BEGIN__ ... __GV_JSON_END__
- */
 function parseExtractJson(out) {
   const beginIdx = out.indexOf('__GV_JSON_BEGIN__');
   const endIdx = out.indexOf('__GV_JSON_END__');
@@ -172,56 +237,6 @@ function parseExtractJson(out) {
       baseUrl: v.baseUrl,
     })),
   };
-}
-
-/**
- * 从 extract 脚本输出中解析出接口返回的 JSON。
- * 脚本输出形如：
- *   ...
- *   === 接口返回 ===
- *   status: 200
- *   code: 200   message: 操作成功
- *   vid: xxx  host: yyy  title: zzz
- *   共 N 个清晰度：
- *     [xxx] yyy  size=...
- *       https://...
- *     [xxx] yyy  size=...
- *       https://...
- */
-function parseExtractOutput(out) {
-  const lines = out.split('\n');
-  let code = null, message = '', vid = '', host = '', title = '';
-  const items = [];
-  let inItems = false;
-  let pendingItem = null;
-
-  for (const ln of lines) {
-    const m1 = ln.match(/^code:\s*(\S+)\s+message:\s*(.*)$/);
-    if (m1) { code = m1[1]; message = m1[2].trim(); continue; }
-    const m2 = ln.match(/^vid:\s*(\S+)\s+host:\s*(\S+)\s+title:\s*(.*)$/);
-    if (m2) { vid = m2[1]; host = m2[2]; title = m2[3].trim(); continue; }
-    if (/^共 \d+ 个/.test(ln)) { inItems = true; continue; }
-    if (inItems) {
-      const itemMatch = ln.match(/^\s*\[(.+?)\]\s+(\S+)\s+size=([\d.]+)MB\s+direct=(\S+)\s*$/);
-      if (itemMatch) {
-        if (pendingItem) items.push(pendingItem);
-        pendingItem = {
-          quality: itemMatch[1],
-          fileType: itemMatch[2],
-          size: parseFloat(itemMatch[3]),
-          canDirectDownload: itemMatch[4] === 'true',
-          baseUrl: null,
-        };
-      } else if (pendingItem) {
-        const urlMatch = ln.match(/^\s*(https?:\/\/\S+)\s*$/);
-        if (urlMatch) {
-          pendingItem.baseUrl = urlMatch[1];
-        }
-      }
-    }
-  }
-  if (pendingItem) items.push(pendingItem);
-  return { code, message, vid, host, title, items };
 }
 
 // ---------- 单个视频处理 ----------
@@ -255,7 +270,7 @@ async function processOne(input) {
     items: r.items, fetchedAt: new Date().toISOString(),
   }, null, 2), 'utf8');
 
-  // 给一些 platform 的视频加 Referer（B 站已知需要）
+  // 给一些 platform 的视频加 Referer
   const refererMap = {
     bilibili: 'https://www.bilibili.com',
   };
@@ -291,7 +306,6 @@ async function processOne(input) {
       target = `image-${String(imageIdx).padStart(3,'0')}.${ext}`;
       category = 'image';
     } else {
-      // 未分类，放 loose
       imageIdx++;
       const ext = extFromUrl(item.baseUrl, 'bin');
       target = `image-${String(imageIdx).padStart(3,'0')}.${ext}`;
@@ -311,8 +325,7 @@ async function processOne(input) {
     }
   });
 
-  // 公众号/文章的 markdown 文本：直接使用接口返回的 baseUrl 字段（本身就是 markdown 文本），不需下载
-  // 仅当内容含真正的 markdown 标记（# 标题/![]图片/[]()链接）时才生成 content.md
+  // 公众号 markdown
   if (markdownItems.length > 0) {
     const realMd = markdownItems.filter(it => {
       const t = String(it.baseUrl || '');
@@ -322,16 +335,9 @@ async function processOne(input) {
       console.log(`  [3/3] markdown 项只是标题文本，已跳过 content.md 生成`);
     } else {
       console.log(`  [3/3] 生成 content.md（${realMd.length} 个 markdown 文本）...`);
-    // 从 info.json 重建 URL → 本地文件名映射（精确匹配）
     const info = JSON.parse(fs.readFileSync(path.join(dir, 'info.json'), 'utf8'));
     const urlToFile = new Map();
     const allFiles = fs.readdirSync(dir);
-    for (const item of info.items) {
-      // 找到对应的本地文件
-      // 简单策略：按 item 在原数组的顺序 + imageFiles 的字典序匹配
-      // 实际上 download 阶段会保持 items 顺序，文件名按 imageIdx 递增
-    }
-    // 用 items 顺序直接构建映射：按 items 顺序，image-NNN 文件按 NNN 升序排列
     const imageFiles = allFiles.filter(f => /^image-\d+\./.test(f)).sort();
     const urlOrdered = [];
     for (const item of info.items) {
@@ -382,9 +388,15 @@ async function main() {
   node download_videos.cjs "<分享文本或URL>" ["<更多>" ...]
   node download_videos.cjs < urlfile.txt    # 每行一个链接/分享文本
 
+配置文件：
+  ~/.extract_video_config.json
+  { "outputDir": "~/extract_video" }
+
 环境变量：
-  GV_OUTPUT    输出根目录（默认 ./gv_downloads）
-  GV_NODE      Node 二进制路径（默认 which node 的结果）
+  GV_OUTPUT    输出根目录（覆盖配置文件）
+
+并行限制：
+  最大并行数 3，每个视频间隔 3 秒
 
 目录命名：<平台>-<vid>-<标题截断60字>/
 `);
@@ -397,19 +409,36 @@ async function main() {
   }
 
   console.log(`输出根目录: ${OUTPUT_ROOT}`);
+  console.log(`配置文件: ${CONFIG_PATH}`);
   fs.mkdirSync(OUTPUT_ROOT, { recursive: true });
 
-  const results = [];
-  for (const input of inputs) {
+  if (inputs.length === 1) {
+    // 单个视频，直接处理
+    const results = [];
     try {
-      const r = await processOne(input);
+      const r = await processOne(inputs[0]);
       results.push(r);
     } catch (e) {
       console.log(`  !! 异常: ${e.message}`);
-      results.push({ input, ok: false, reason: e.message });
+      results.push({ input: inputs[0], ok: false, reason: e.message });
     }
+    printSummary(results);
+  } else {
+    // 多个视频，并行控制
+    console.log(`\n共 ${inputs.length} 个视频，最大并行 ${MAX_VIDEO_PARALLEL}，间隔 ${VIDEO_INTERVAL / 1000}s\n`);
+    const results = await runVideosWithLimit(inputs, async (input) => {
+      try {
+        return await processOne(input);
+      } catch (e) {
+        console.log(`  !! 异常: ${e.message}`);
+        return { input, ok: false, reason: e.message };
+      }
+    });
+    printSummary(results);
   }
+}
 
+function printSummary(results) {
   console.log(`\n${'='.repeat(60)}`);
   console.log(`汇总: 共处理 ${results.length} 个，${results.filter(r => r.ok).length} 个成功`);
   for (const r of results) {

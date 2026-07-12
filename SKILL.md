@@ -1,15 +1,14 @@
 ---
 slug: all-platform-video-extract
 displayName: all-platform-video-extract
-version: 2.0.0
+version: 2.1.0
 summary: 解析 1000+ 视频平台链接，获取标题、封面、各清晰度下载直链。
 license: MIT
 name: all-platform-video-extract
 description: 解析 1000+ 视频平台的视频链接（抖音/快手/B站/YouTube/TikTok/小红书/微博等），获取标题、封面、各清晰度下载直链。当用户提供视频分享文本或视频 URL 想提取下载链接时触发。
 agent_created: true
-links:
-  - label: GitHub
-    url: https://github.com/engrecho/all-platform-video-extract
+links: GitHub https://github.com/engrecho/all-platform-video-extract
+
 ---
 
 # all-platform-video-extract
@@ -23,6 +22,34 @@ links:
 
 不触发：youtube-dl/yt-dlp 类通用下载需求、本地视频文件处理。
 
+## 首次加载：初始化配置
+
+当本 Skill 首次被使用时（检测到 `~/.extract_video_config.json` 不存在），**必须**执行以下初始化流程：
+
+1. 询问用户：「视频下载保存到哪个目录？默认是 `~/extract_video`，是否需要修改？」
+2. 如果用户明确给出目录，使用用户指定的目录
+3. 如果用户说「不用改」「默认就行」「可以」等未明确修改的回复，使用 `~/extract_video`
+4. 将最终目录写入配置文件：
+
+```bash
+mkdir -p ~/.config
+cat > ~/.extract_video_config.json << 'EOF'
+{"outputDir": "~/extract_video"}
+EOF
+```
+
+（如果用户指定了其他目录，替换 `outputDir` 的值）
+
+5. 后续所有下载操作都从该配置文件读取输出目录，不再重复询问
+
+**检测配置是否已存在：**
+
+```bash
+cat ~/.extract_video_config.json 2>/dev/null
+```
+
+如果输出有效 JSON 则跳过初始化；如果报错或文件不存在，则执行上述初始化流程。
+
 ## Quick Start
 
 ```bash
@@ -35,16 +62,27 @@ node scripts/download_videos.cjs "<视频分享文本或URL>"
 
 ## Workflow
 
-### Step 1: 识别输入
+### Step 1: 检查配置文件
+
+每次下载前，先检查 `~/.extract_video_config.json` 是否存在：
+
+```bash
+cat ~/.extract_video_config.json 2>/dev/null
+```
+
+- 如果不存在或无效 → 执行「首次加载：初始化配置」流程
+- 如果存在 → 从中读取 `outputDir` 作为下载根目录
+
+### Step 2: 识别输入
 
 从用户消息中提取视频链接或分享文本。抖音/快手分享文本需整段传入，不要只提取 URL。
 
-### Step 2: 判断行为模式
+### Step 3: 判断行为模式
 
 - **仅获取信息**：用户说"解析"、"看看"、"获取链接"等 → 调用 `video_extract.cjs`，呈现结果
 - **下载到本地**：用户说"下载"、"保存"等 → 调用 `download_videos.cjs`
 
-### Step 3: 执行脚本
+### Step 4: 执行脚本
 
 ```bash
 node scripts/video_extract.cjs "<分享文本或URL>"
@@ -52,38 +90,41 @@ node scripts/video_extract.cjs "<分享文本或URL>"
 
 脚本超时 60 秒，解析通常 3~15 秒。
 
-### Step 4: 处理结果
+### Step 5: 处理结果
 
 - **code=200**：解析成功，提取各清晰度下载链接
 - **code=530**：公钥过期（约 5 分钟有效），重跑即可
 - **超时/网络错误**：间隔几秒重试
 
-### Step 5: 呈现结果
+### Step 6: 呈现结果
 
 - 下载链接必须**完整输出**，不得截断
 - 多清晰度按从高到低排列
 - 提醒用户链接有时效性，尽早下载
 
-### Step 6: 下载（仅模式 B）
+### Step 7: 下载（仅模式 B）
 
 ```bash
 # 单个
 node scripts/download_videos.cjs "<分享文本或URL>"
 
 # 多个
-node scripts/download_videos.cjs "<链接1>" "<链接2>"
+node scripts/download_videos.cjs "<链接1>" "<链接2>" "<链接3>"
 
 # 从文件读
 node scripts/download_videos.cjs urls.txt
-
-# 自定义输出目录
-GV_OUTPUT=~/Videos node scripts/download_videos.cjs "<链接>"
 ```
 
-下载目录结构：`<平台>-<vid>-<标题>/`，含 video.mp4、cover、images、content.md（公众号）。
+**多任务并行限制：**
+- 最大并行数：3（同时最多处理 3 个视频）
+- 下载间隔：3 秒（每个视频之间间隔 3s，避免请求过于频繁）
+- 脚本已内置并行控制和间隔逻辑，无需手动处理
+
+下载目录结构：`<输出根目录>/<平台>-<vid>-<标题>/`，含 video.mp4、cover、images、content.md（公众号）。
 
 ## Notes
 
 - 链接完整性：呈现任何 URL 时必须完整输出，不得省略
 - 链接时效性：下载链接通常几小时有效，解析成功后建议立即下载
 - B 站下载需加 `Referer: https://www.bilibili.com` 头，脚本已自动处理
+- 配置文件路径：`~/.extract_video_config.json`，记录用户选择的下载目录
