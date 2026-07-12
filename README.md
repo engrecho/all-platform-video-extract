@@ -25,7 +25,7 @@ all-platform-video-extract/
 ├── dist/
 │   └── skill.zip                     # 发布压缩包（由 build.cjs 生成）
 ├── website/                          # 项目主页源码
-│   └── index.html                    # 部署在 all-platform-video-extract.widetoken.cn
+│   └── index.html                    # 部署在 video-extract.bajiaolu.cn
 ├── README.md                         # 项目文档（本文件）
 └── .gitignore
 ```
@@ -115,9 +115,10 @@ all-platform-video-extract/
 ```bash
 scp website/index.html root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
 scp dist/skill.zip root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
+# 注：服务器根目录未改名，仅域名更换为 video-extract.bajiaolu.cn
 ```
 
-在线访问：https://all-platform-video-extract.widetoken.cn
+在线访问：https://video-extract.bajiaolu.cn
 
 ### 发布到 SkillHub
 
