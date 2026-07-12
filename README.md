@@ -9,25 +9,20 @@
 - 两种模式：仅解析获取链接 / 解析 + 下载到本地
 - 公众号支持：自动保存 markdown 全文，内嵌图片本地化
 - B 站自动加 Referer 头
-- 发布版脚本 AES-256-CBC 加密，防止源码查看
+- 明文脚本，完全可审计
 
 ## 目录结构
 
 ```
 all-platform-video-extract/
-├── dev/                              # 开发文件夹（明文源码）
-│   ├── scripts/
-│   │   ├── video_extract.cjs         # 解析脚本（明文）
-│   │   └── download_videos.cjs       # 下载脚本（明文）
-│   ├── references/
-│   │   └── encryption_flow.md        # 接口逆向分析（开发参考）
-│   ├── SKILL.md                      # Skill 入口（触发条件 + 工作流）
-│   └── build.cjs                     # 加密构建 + 打包脚本
-├── release/                          # 发布文件夹（加密代码）
-│   ├── scripts/
-│   │   ├── video_extract.cjs         # 加密 loader
-│   │   └── download_videos.cjs       # 加密 loader
-│   ├── SKILL.md                      # 由 build.cjs 从 dev/ 同步
+├── SKILL.md                          # Skill 入口（触发条件 + 工作流）
+├── scripts/
+│   ├── video_extract.cjs             # 解析脚本
+│   └── download_videos.cjs           # 下载脚本
+├── build.cjs                         # 打包脚本（生成 dist/skill.zip）
+├── references/
+│   └── encryption_flow.md            # 接口逆向分析（开发参考）
+├── dist/
 │   └── skill.zip                     # 发布压缩包（由 build.cjs 生成）
 ├── website/                          # 项目主页源码
 │   └── index.html                    # 部署在 all-platform-video-extract.widetoken.cn
@@ -39,29 +34,29 @@ all-platform-video-extract/
 
 ### 安装为 Skill
 
-将 release 文件夹软链接到 skills 目录：
+将项目根目录软链接到 skills 目录：
 
 ```bash
-ln -s "$(pwd)/release" ~/.workbuddy/skills/all-platform-video-extract
+ln -s "$(pwd)" ~/.workbuddy/skills/all-platform-video-extract
 ```
 
 ### 命令行使用
 
 ```bash
 # 仅解析（获取链接）
-node release/scripts/video_extract.cjs "8.94 复制打开抖音，看看【xxx的作品】..."
+node scripts/video_extract.cjs "8.94 复制打开抖音，看看【xxx的作品】..."
 
 # 下载到本地
-node release/scripts/download_videos.cjs "8.94 复制打开抖音..."
+node scripts/download_videos.cjs "8.94 复制打开抖音..."
 
 # 批量下载
-node release/scripts/download_videos.cjs "链接1" "链接2" "链接3"
+node scripts/download_videos.cjs "链接1" "链接2" "链接3"
 
 # 从文件读（每行一个）
-node release/scripts/download_videos.cjs urls.txt
+node scripts/download_videos.cjs urls.txt
 
 # 自定义输出目录
-GV_OUTPUT=~/Videos/归档 node release/scripts/download_videos.cjs "链接"
+GV_OUTPUT=~/Videos/归档 node scripts/download_videos.cjs "链接"
 ```
 
 ### 下载目录结构
@@ -86,36 +81,22 @@ GV_OUTPUT=~/Videos/归档 node release/scripts/download_videos.cjs "链接"
 
 ### 开发
 
-在 `dev/scripts/` 下编辑明文源码，直接运行测试：
+直接在 `scripts/` 下编辑脚本，运行测试：
 
 ```bash
-node dev/scripts/video_extract.cjs "视频链接"
-node dev/scripts/download_videos.cjs "视频链接"
+node scripts/video_extract.cjs "视频链接"
+node scripts/download_videos.cjs "视频链接"
 ```
 
-### 生成 Release
+### 生成 skill.zip
 
-修改源码后，运行构建脚本一键完成「加密 + 同步 + 打包」：
+修改脚本或 SKILL.md 后，运行打包脚本：
 
 ```bash
-node dev/build.cjs
+node build.cjs
 ```
 
-构建流程：
-
-| 步骤 | 操作 | 输出 |
-|------|------|------|
-| Step 1 | AES-256-CBC 加密 `dev/scripts/*.cjs` | `release/scripts/*.cjs` |
-| Step 2 | 复制 `dev/SKILL.md` | `release/SKILL.md` |
-| Step 3 | 将 `release/` 打包为 zip | `release/skill.zip` |
-
-也可仅加密不打包：
-
-```bash
-node dev/build.cjs --no-zip
-```
-
-生成的 `release/skill.zip` 内部结构：
+生成的 `dist/skill.zip` 内部结构：
 
 ```
 all-platform-video-extract/
@@ -133,26 +114,24 @@ all-platform-video-extract/
 
 ```bash
 scp website/index.html root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
-scp release/skill.zip root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
+scp dist/skill.zip root@<server>:/www/wwwroot/all-platform-video-extract.widetoken.cn/
 ```
 
 在线访问：https://all-platform-video-extract.widetoken.cn
 
-### 脚本加密方案
+### 发布到 SkillHub
 
-发布版脚本使用 AES-256-CBC 加密：
+```bash
+# 本地预检
+skillhub publish . --dry-run
 
-- 源码加密后以 base64 嵌入 loader
-- 密钥和 IV 拆成混淆字节数组（加随机偏移），运行时还原
-- loader 用 `vm.compileFunction` 解密执行，保留 CommonJS 上下文
-- 零依赖，仅用 `crypto` + `vm`
-- 使用方式跟普通脚本完全一样，运行时自动解密，不需要手动操作
-
-加密局限性：Node.js 脚本密钥必须嵌入文件才能自运行，能防止直接查看代码，但不防专业逆向。如需更强保护，建议将核心常量移到服务端 API。
+# 正式发布
+skillhub publish . --changelog "变更说明"
+```
 
 ## 接口协议
 
-详见 [`dev/references/encryption_flow.md`](dev/references/encryption_flow.md)。
+详见 [`references/encryption_flow.md`](references/encryption_flow.md)。
 
 ```
 原始 body {url, list, pageNo, pageSize}
@@ -164,14 +143,11 @@ scp release/skill.zip root@<server>:/www/wwwroot/all-platform-video-extract.wide
 
 ## FAQ
 
-**加密后的脚本每次运行都需要解密吗？**
-不需要。加密后的文件是自包含的 loader，运行时自动在内存中解密执行，毫秒级完成，使用方式跟普通脚本一样。
+**如何更新脚本？**
+直接编辑 `scripts/` 下的源码，然后运行 `node build.cjs` 重新打包。
 
-**如何更新发布版脚本？**
-修改 `dev/scripts/` 下的源码，然后运行 `node dev/build.cjs`。
-
-**dev/ 和 release/ 的关系？**
-`dev/` 是明文源码，`release/` 是加密后的发布版本。`build.cjs` 负责加密 + 同步 + 打包。
+**如何发布到 SkillHub？**
+运行 `skillhub publish . --changelog "变更说明"`，注意发布前需将 `dist/` 下的 zip 文件移出（SkillHub 不允许上传 zip）。
 
 ## License
 
